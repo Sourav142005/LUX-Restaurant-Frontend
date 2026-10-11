@@ -41,12 +41,44 @@ function getFoodImage(item) {
     return "/images/food/tomato-soup.jpg";
 }
 
+function getFoodModel(item) {
+    if (item.model3D) return item.model3D;
+
+    const name = (item.name || "").toLowerCase().trim();
+
+    if (name.includes("cappuccino") || name.includes("coffee")) {
+        return "/models/coffee_cup.glb";
+    }
+
+    if (
+        name.includes("pizza") ||
+        (name.includes("cheese") && name.includes("tomato"))
+    ) {
+        return "/models/pizza_30cm.glb";
+    }
+
+    if (
+        name.includes("chocolate pastry") ||
+        name.includes("pastry") ||
+        name.includes("cake")
+    ) {
+        return "/models/chocolate_ pastry_20cm.glb";
+    }
+
+    if (name.includes("pepsi")) {
+        return "/models/pepsi.glb";
+    }
+
+    return null;
+}
+
 function MenuCard({ item }) {
     const { addToCart } = useCart();
     const navigate = useNavigate();
 
     const available = Boolean(item.isAvailable);
     const foodImage = getFoodImage(item);
+    const foodModel = getFoodModel(item);
 
     const categoryName = (item.category?.name || "")
         .trim()
@@ -60,9 +92,10 @@ function MenuCard({ item }) {
     ].includes(categoryName);
 
     const handleViewAR = () => {
+        if (!foodModel) return;
         navigate(
             `/ar-test?model=${encodeURIComponent(
-                item.model3D
+                foodModel
             )}&name=${encodeURIComponent(item.name)}`
         );
     };
@@ -176,7 +209,7 @@ function MenuCard({ item }) {
                         </div>
 
                         {/* AR BUTTON */}
-                        {item.model3D && available && (
+                        {foodModel && available && (
                             <button
                                 onClick={handleViewAR}
                                 className="inline-flex items-center gap-1.5 rounded-xl border border-[#D8D0C4] px-3 py-2 text-xs font-bold text-[#4B443C] hover:border-[#D4AF7C] hover:bg-[#D4AF7C]/10 hover:text-[#8B6A3E]"
