@@ -19,13 +19,15 @@ import {
 import { Sparkles, Bot } from "lucide-react";
 import api from "../../services/api";
 import { useCart } from "../../context/CartContext";
+import LuciAvatar from "./LuciAvatar";
+import FormattedMessage from "./FormattedMessage";
 
 // Initial assistant introduction
 const INITIAL_MESSAGES = [
     {
         id: "welcome-1",
         sender: "ai",
-        text: "Welcome to LUX! I'm LUX AI, your personal dining concierge and hands-free voice assistant.\n\nI can recommend dishes from our live menu, answer questions about prices & preparation times, or take your order by voice or text.",
+        text: "Welcome to LUX! I'm **Luci**, your personal dining concierge and hands-free voice assistant.\n\nI can recommend dishes from our live menu, answer questions about prices & preparation times, or take your order by voice or text.",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         suggestedPrompts: [
             "What can I eat under ₹300?",
@@ -389,7 +391,7 @@ function LuxAiAssistant() {
             <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] right-4 sm:bottom-6 sm:right-6 z-50">
                 <button
                     onClick={() => setIsOpen((prev) => !prev)}
-                    aria-label="Open LUX AI Assistant"
+                    aria-label={isOpen ? "Close Luci Assistant" : "Open Luci — Your Personal Dining Concierge"}
                     className={`group relative flex items-center gap-2 sm:gap-2.5 rounded-full px-3.5 py-2.5 sm:px-4 sm:py-3.5 shadow-2xl transition-all duration-300 touch-manipulation ${
                         isOpen
                             ? "bg-[#0B0B0B] text-[#D4AF7C] ring-2 ring-[#D4AF7C]/60"
@@ -399,16 +401,22 @@ function LuxAiAssistant() {
                     {/* Glowing gold pulse ring when idle */}
                     <span className="absolute -inset-0.5 -z-10 rounded-full bg-gradient-to-r from-[#D4AF7C]/40 to-[#B88A4A]/20 opacity-75 blur-sm transition group-hover:opacity-100" />
 
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1A1A1A] border border-[#D4AF7C]/40 text-[#D4AF7C]">
-                        {isOpen ? <FiX size={18} /> : <Sparkles size={16} className="animate-pulse" />}
+                    <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center shrink-0">
+                        {isOpen ? (
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1A1A1A] border border-[#D4AF7C]/40 text-[#D4AF7C]">
+                                <FiX size={18} />
+                            </div>
+                        ) : (
+                            <LuciAvatar size="sm" />
+                        )}
                     </div>
 
                     <div className="text-left pr-1">
                         <span className="block text-xs font-black tracking-widest text-[#D4AF7C] uppercase">
-                            LUX AI
+                            Luci
                         </span>
                         <span className="block text-[9px] sm:text-[10px] font-medium text-gray-400">
-                            {isOpen ? "Close Assistant" : "Voice & Food Concierge"}
+                            {isOpen ? "Close Assistant" : "Your Dining Concierge"}
                         </span>
                     </div>
                 </button>
@@ -418,27 +426,28 @@ function LuxAiAssistant() {
             {isOpen && (
                 <div
                     role="dialog"
-                    aria-label="LUX AI Chat Window"
+                    aria-label="Luci — Your Personal Dining Concierge"
                     className="fixed bottom-0 right-0 z-50 flex h-[92vh] w-full flex-col overflow-hidden bg-white shadow-2xl border-t border-[#D8D0C4] sm:bottom-24 sm:right-6 sm:h-[640px] sm:max-h-[85vh] sm:w-[420px] sm:rounded-3xl sm:border sm:border-[#D8D0C4]/80"
                 >
                     {/* ===== HEADER ===== */}
                     <div className="flex items-center justify-between border-b border-[#2B1F14]/10 bg-[#0B0B0B] px-5 py-4 text-white">
                         <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#2B1F14] to-[#141414] border border-[#D4AF7C]/50 text-[#D4AF7C] shadow-sm">
-                                <Bot size={20} />
-                            </div>
+                            <LuciAvatar size="md" />
                             <div>
                                 <div className="flex items-center gap-2">
                                     <h3 className="font-extrabold tracking-wider text-white text-base">
-                                        LUX AI
+                                        Luci
                                     </h3>
+                                    <span className="text-[10px] sm:text-[11px] font-semibold text-[#D4AF7C]/90">
+                                        by LUX
+                                    </span>
                                     <span className="inline-flex items-center gap-1 rounded-full bg-[#D4AF7C]/15 px-2 py-0.5 text-[10px] font-bold text-[#D4AF7C]">
                                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                                         LIVE
                                     </span>
                                 </div>
-                                <p className="text-[11px] text-gray-400">
-                                    Dining Concierge • Voice Ordering
+                                <p className="text-[10px] sm:text-[11px] text-gray-400">
+                                    Your Personal Dining Concierge
                                 </p>
                             </div>
                         </div>
@@ -511,10 +520,14 @@ function LuxAiAssistant() {
                                             : "bg-white text-[#2B1F14] border border-[#E8E0D4] rounded-bl-none"
                                     }`}
                                 >
-                                    {/* Text with preserved line breaks */}
-                                    <div className="whitespace-pre-line font-normal">
-                                        {msg.text}
-                                    </div>
+                                    {/* Text with formatted Markdown for assistant, clean wrap for user */}
+                                    {msg.sender === "user" ? (
+                                        <div className="whitespace-pre-wrap font-normal text-white text-xs sm:text-sm">
+                                            {msg.text}
+                                        </div>
+                                    ) : (
+                                        <FormattedMessage text={msg.text} />
+                                    )}
 
                                     {/* Error Retry button */}
                                     {msg.isError && msg.retryMessage && (
@@ -716,7 +729,7 @@ function LuxAiAssistant() {
                                         style={{ animationDelay: "300ms" }}
                                     />
                                     <span className="ml-2 text-xs font-medium text-[#756F66]">
-                                        Thinking...
+                                        Luci is thinking...
                                     </span>
                                 </div>
                             </div>
@@ -831,10 +844,10 @@ function LuxAiAssistant() {
                         <div className="mt-2 flex items-center justify-between px-1 text-[10px] text-gray-400">
                             <span>
                                 {speechSupported
-                                    ? "🎙️ Tap mic for hands-free voice ordering"
-                                    : "Type requests or menu questions above"}
+                                    ? "🎙️ Tap mic to speak with Luci"
+                                    : "Type your dining request above"}
                             </span>
-                            <span>Live Menu Connected</span>
+                            <span>Luci by LUX</span>
                         </div>
                     </div>
                 </div>
