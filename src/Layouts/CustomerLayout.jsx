@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import Navbar from "../components/Navbar/Navbar";
 import Footer from "../components/Footer/Footer";
+import LuxAiAssistant from "../components/LuxAi/LuxAiAssistant";
 
 function CustomerLayout() {
     return (
@@ -10,6 +11,7 @@ function CustomerLayout() {
                 <Outlet />
             </main>
             <Footer />
+            <LuxAiAssistant />
         </div>
     );
 }
