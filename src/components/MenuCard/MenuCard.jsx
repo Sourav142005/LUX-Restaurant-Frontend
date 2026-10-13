@@ -1,4 +1,5 @@
-import { FiClock, FiEye, FiPlus } from "react-icons/fi";
+import { FiClock, FiEye, FiMinus, FiPlus } from "react-icons/fi";
+import toast from "react-hot-toast";
 import { useCart } from "../../context/CartContext";
 import { useNavigate } from "react-router-dom";
 
@@ -73,8 +74,18 @@ function getFoodModel(item) {
 }
 
 function MenuCard({ item }) {
-    const { addToCart } = useCart();
+    const {
+        cartItems,
+        addToCart,
+        increaseQuantity,
+        decreaseQuantity,
+    } = useCart();
     const navigate = useNavigate();
+
+    const cartItem = cartItems?.find(
+        (cartEntry) => cartEntry._id === item._id
+    );
+    const quantity = cartItem ? Number(cartItem.quantity || 0) : 0;
 
     const available = Boolean(item.isAvailable);
     const foodImage = getFoodImage(item);
@@ -91,13 +102,63 @@ function MenuCard({ item }) {
         "drinks",
     ].includes(categoryName);
 
-    const handleViewAR = () => {
+    const handleViewAR = (e) => {
+        e?.stopPropagation();
         if (!foodModel) return;
         navigate(
             `/ar-test?model=${encodeURIComponent(
                 foodModel
             )}&name=${encodeURIComponent(item.name)}`
         );
+    };
+
+    const handleAddToCart = (e) => {
+        e.stopPropagation();
+        if (!available) return;
+
+        try {
+            addToCart(item);
+
+            toast.success(`${item.name} added to cart`, {
+                id: `cart-${item._id}`,
+                style: {
+                    background: "#0B0B0B",
+                    color: "#FFF6E9",
+                    border: "1px solid rgba(212, 175, 124, 0.4)",
+                    borderRadius: "14px",
+                    padding: "12px 18px",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    boxShadow:
+                        "0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 15px rgba(212, 175, 124, 0.15)",
+                },
+                iconTheme: {
+                    primary: "#D4AF7C",
+                    secondary: "#0B0B0B",
+                },
+            });
+        } catch (error) {
+            console.error("Failed to add item to cart:", error);
+        }
+    };
+
+    const handleDecrease = (e) => {
+        e.stopPropagation();
+        try {
+            decreaseQuantity(item._id);
+        } catch (error) {
+            console.error("Failed to decrease quantity:", error);
+        }
+    };
+
+    const handleIncrease = (e) => {
+        e.stopPropagation();
+        if (!available) return;
+        try {
+            increaseQuantity(item._id);
+        } catch (error) {
+            console.error("Failed to increase quantity:", error);
+        }
     };
 
     return (
@@ -220,22 +281,69 @@ function MenuCard({ item }) {
                         )}
                     </div>
 
-                    {/* ADD TO CART */}
-                    <button
-                        onClick={() => addToCart(item)}
-                        disabled={!available}
-                        className={`flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold transition ${
-                            available
-                                ? "bg-[#0B0B0B] text-white shadow-lg shadow-black/10 hover:bg-[#2B1F14] active:scale-[.99]"
-                                : "cursor-not-allowed bg-[#EEEAE3] text-[#AAA49B]"
-                        }`}
-                    >
-                        <FiPlus size={17} />
+                    {/* ADD TO CART / QUANTITY STEPPER */}
+                    {!available && quantity === 0 ? (
+                        <button
+                            type="button"
+                            disabled
+                            aria-label={`${item.name} is unavailable`}
+                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#EEEAE3] py-3.5 text-sm font-bold text-[#AAA49B] cursor-not-allowed"
+                        >
+                            <FiPlus size={17} />
+                            Unavailable
+                        </button>
+                    ) : quantity > 0 ? (
+                        <div
+                            role="group"
+                            aria-label={`Quantity selector for ${item.name}`}
+                            className="flex h-12 w-full items-center justify-between rounded-xl border border-[#D4AF7C]/40 bg-[#FAF7F2] p-1 shadow-sm transition-all duration-200"
+                        >
+                            <button
+                                type="button"
+                                onClick={handleDecrease}
+                                aria-label={`Decrease quantity of ${item.name}`}
+                                className="flex h-10 w-11 items-center justify-center rounded-lg bg-white text-[#2B1F14] shadow-sm transition hover:bg-[#D4AF7C]/20 hover:text-[#0B0B0B] active:scale-95"
+                            >
+                                <FiMinus size={16} />
+                            </button>
 
-                        {available
-                            ? "Add to cart"
-                            : "Unavailable"}
-                    </button>
+                            <div className="flex items-center gap-1.5 px-2">
+                                <span className="text-xs font-semibold text-[#8B6A3E]">
+                                    Qty:
+                                </span>
+                                <span
+                                    aria-live="polite"
+                                    className="text-base font-black text-[#0B0B0B]"
+                                >
+                                    {quantity}
+                                </span>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={handleIncrease}
+                                disabled={!available}
+                                aria-label={`Increase quantity of ${item.name}`}
+                                className={`flex h-10 w-11 items-center justify-center rounded-lg text-base font-bold shadow-sm transition ${
+                                    available
+                                        ? "bg-[#0B0B0B] text-[#D4AF7C] hover:bg-[#2B1F14] active:scale-95"
+                                        : "cursor-not-allowed bg-[#EEEAE3] text-[#AAA49B]"
+                                }`}
+                            >
+                                <FiPlus size={16} />
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={handleAddToCart}
+                            aria-label={`Add ${item.name} to cart`}
+                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0B0B0B] py-3.5 text-sm font-bold text-white shadow-lg shadow-black/10 transition hover:bg-[#2B1F14] active:scale-[.99]"
+                        >
+                            <FiPlus size={17} />
+                            Add to cart
+                        </button>
+                    )}
                 </div>
             </div>
         </article>
