@@ -31,7 +31,7 @@ function MyReservations() {
 
             console.error(error);
 
-            if (isInitial) {
+            if (isInitial && error.response?.status !== 401) {
                 toast.error(
                     error.response?.data?.message ||
                     "Failed to load reservations"
@@ -102,10 +102,12 @@ function MyReservations() {
 
             console.error(error);
 
-            toast.error(
-                error.response?.data?.message ||
-                "Failed to cancel reservation"
-            );
+            if (error.response?.status !== 401) {
+                toast.error(
+                    error.response?.data?.message ||
+                    "Failed to cancel reservation"
+                );
+            }
 
         } finally {
 
