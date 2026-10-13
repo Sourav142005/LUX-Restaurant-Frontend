@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import {
     Eye,
@@ -14,11 +14,29 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 
+const getSafeRedirect = (target) => {
+    if (!target) return "/";
+    const trimmed = target.trim();
+    if (!trimmed.startsWith("/") || trimmed.startsWith("//")) return "/";
+    const lower = trimmed.toLowerCase();
+    if (
+        lower === "/login" ||
+        lower.startsWith("/login?") ||
+        lower === "/register" ||
+        lower.startsWith("/register?") ||
+        lower === "/forgot-password" ||
+        lower.startsWith("/forgot-password?")
+    ) {
+        return "/";
+    }
+    return trimmed;
+};
+
 function Login() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const returnTo = searchParams.get("returnTo");
-    const { login } = useAuth();
+    const { login, isAuthenticated } = useAuth();
 
     const [formData, setFormData] = useState({
         identifier: "",
@@ -27,6 +45,12 @@ function Login() {
 
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate(getSafeRedirect(returnTo), { replace: true });
+        }
+    }, [isAuthenticated, navigate, returnTo]);
 
     const handleChange = (e) => {
         setFormData((prev) => ({
@@ -61,14 +85,25 @@ function Login() {
             );
 
             toast.success("Welcome back to LUX!");
-            const safeRedirect =
-                returnTo &&
-                returnTo.startsWith("/") &&
-                !returnTo.startsWith("//")
-                    ? returnTo
-                    : "/";
-            navigate(safeRedirect);
+            navigate(getSafeRedirect(returnTo), { replace: true });
         } catch (error) {
+            if (
+                error.response?.status === 403 &&
+                error.response?.data?.requiresPhoneVerification
+            ) {
+                toast.error(
+                    error.response.data.message ||
+                    "Please verify your phone number before logging in."
+                );
+                navigate("/verify-phone", {
+                    state: {
+                        phone: error.response.data.phone,
+                        returnTo: getSafeRedirect(returnTo)
+                    }
+                });
+                return;
+            }
+
             toast.error(
                 error.response?.data?.message || "Login failed"
             );
@@ -278,7 +313,11 @@ function Login() {
                             <p className="text-sm text-[#777067]">
                                 Don't have an account?{" "}
                                 <Link
-                                    to="/register"
+                                    to={
+                                        returnTo
+                                            ? `/register?returnTo=${encodeURIComponent(returnTo)}`
+                                            : "/register"
+                                    }
                                     className="font-black text-[#9A6F3D] transition-colors hover:text-[#0B0B0B]"
                                 >
                                     Create one

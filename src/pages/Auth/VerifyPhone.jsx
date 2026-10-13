@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
     ArrowLeft,
@@ -13,13 +13,38 @@ import {
 import api from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 
+const getSafeRedirect = (target) => {
+    if (!target) return "/";
+    const trimmed = target.trim();
+    if (!trimmed.startsWith("/") || trimmed.startsWith("//")) return "/";
+    const lower = trimmed.toLowerCase();
+    if (
+        lower === "/login" ||
+        lower.startsWith("/login?") ||
+        lower === "/register" ||
+        lower.startsWith("/register?") ||
+        lower === "/verify-phone" ||
+        lower.startsWith("/verify-phone?") ||
+        lower === "/forgot-password" ||
+        lower.startsWith("/forgot-password?") ||
+        lower === "/reset-password" ||
+        lower.startsWith("/reset-password?") ||
+        lower.startsWith("/reset-password/")
+    ) {
+        return "/";
+    }
+    return trimmed;
+};
 
 function VerifyPhone() {
 
     const navigate = useNavigate();
     const location = useLocation();
+    const [searchParams] = useSearchParams();
 
     const { login } = useAuth();
+
+    const returnTo = location.state?.returnTo || searchParams.get("returnTo");
 
     const [phone, setPhone] = useState(
         location.state?.phone || ""
@@ -98,7 +123,7 @@ function VerifyPhone() {
                     "Phone verified successfully!"
                 );
 
-                navigate("/");
+                navigate(getSafeRedirect(returnTo), { replace: true });
 
             }
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
     Eye,
@@ -15,6 +15,8 @@ import api from "../../services/api";
 
 function Register() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const returnTo = searchParams.get("returnTo");
 
     const [formData, setFormData] = useState({
         fullName: "",
@@ -37,6 +39,8 @@ function Register() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (loading) return;
 
         if (
             !formData.fullName ||
@@ -89,7 +93,8 @@ function Register() {
                     state: {
                         phone:
                             response.data.phone ||
-                            formData.phone
+                            formData.phone,
+                        returnTo
                     }
                 });
 
@@ -422,7 +427,11 @@ function Register() {
                             <p className="text-sm text-[#777067]">
                                 Already have an account?{" "}
                                 <Link
-                                    to="/login"
+                                    to={
+                                        returnTo
+                                            ? `/login?returnTo=${encodeURIComponent(returnTo)}`
+                                            : "/login"
+                                    }
                                     className="font-black text-[#9A6F3D] transition-colors hover:text-[#0B0B0B]"
                                 >
                                     Sign in

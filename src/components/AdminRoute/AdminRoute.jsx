@@ -1,12 +1,19 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 function AdminRoute({ children }) {
-
     const { isAuthenticated, user } = useAuth();
+    const location = useLocation();
 
     if (!isAuthenticated) {
-        return <Navigate to="/login" replace />;
+        const returnPath = location.pathname + location.search;
+        return (
+            <Navigate
+                to={`/login?returnTo=${encodeURIComponent(returnPath)}`}
+                state={{ from: location }}
+                replace
+            />
+        );
     }
 
     if (user?.role !== "admin") {

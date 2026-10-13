@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useCart } from "./CartContext";
 
 const AuthContext = createContext();
@@ -28,6 +28,20 @@ export const AuthProvider = ({ children }) => {
     });
 
     const { clearCart, setCartUser } = useCart();
+
+    useEffect(() => {
+        const handleAuthExpired = () => {
+            clearCart();
+            setCartUser(null);
+            setToken(null);
+            setUser(null);
+        };
+
+        window.addEventListener("lux:auth-expired", handleAuthExpired);
+        return () => {
+            window.removeEventListener("lux:auth-expired", handleAuthExpired);
+        };
+    }, [clearCart, setCartUser]);
 
     const login = (jwtToken, userData) => {
         localStorage.setItem("token", jwtToken);
