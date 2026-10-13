@@ -9,13 +9,15 @@ import {
     Phone,
     ArrowRight,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import api from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 
 function Login() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const returnTo = searchParams.get("returnTo");
     const { login } = useAuth();
 
     const [formData, setFormData] = useState({
@@ -59,7 +61,13 @@ function Login() {
             );
 
             toast.success("Welcome back to LUX!");
-            navigate("/");
+            const safeRedirect =
+                returnTo &&
+                returnTo.startsWith("/") &&
+                !returnTo.startsWith("//")
+                    ? returnTo
+                    : "/";
+            navigate(safeRedirect);
         } catch (error) {
             toast.error(
                 error.response?.data?.message || "Login failed"

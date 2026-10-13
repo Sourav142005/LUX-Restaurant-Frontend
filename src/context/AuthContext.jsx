@@ -5,9 +5,13 @@ import { useCart } from "./CartContext";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [token, setToken] = useState(
-        localStorage.getItem("token") || null
-    );
+    const [token, setToken] = useState(() => {
+        const storedToken = localStorage.getItem("token");
+        if (!storedToken || storedToken === "undefined" || storedToken === "null") {
+            return null;
+        }
+        return storedToken;
+    });
 
     const [user, setUser] = useState(() => {
         const storedUser = localStorage.getItem("user");
