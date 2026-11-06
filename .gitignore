@@ -1,18 +1,25 @@
 
 node_modules/
+dist/
+
 # Environment variables and secrets
 .env
 .env.*
 !.env.example
+
 # Logs
 *.log
 npm-debug.log*
+
 # Test coverage
 coverage/
+
 # Uploads and local data
 uploads/
+
 # OS files
 .DS_Store
 Thumbs.db
+
+# Local admin utility
 resetAdmin.local.js
-dist/

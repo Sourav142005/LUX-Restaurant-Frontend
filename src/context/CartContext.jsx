@@ -202,6 +202,28 @@ export const CartProvider = ({ children }) => {
         });
     };
 
+    const addBatchToCart = (batchItems) => {
+        if (!Array.isArray(batchItems) || batchItems.length === 0) return;
+        setCartItems((currentItems) => {
+            const nextCart = [...currentItems];
+            batchItems.forEach(({ item, quantity }) => {
+                const qty = Math.max(1, Number(quantity) || 1);
+                const existingIndex = nextCart.findIndex(
+                    (ci) => ci._id === item._id
+                );
+                if (existingIndex !== -1) {
+                    nextCart[existingIndex] = {
+                        ...nextCart[existingIndex],
+                        quantity: nextCart[existingIndex].quantity + qty
+                    };
+                } else {
+                    nextCart.push({ ...item, quantity: qty });
+                }
+            });
+            return nextCart;
+        });
+    };
+
     const removeFromCart = (id) => {
         setCartItems((currentItems) =>
             currentItems.filter((item) => item._id !== id)
@@ -292,6 +314,7 @@ export const CartProvider = ({ children }) => {
                 cartTotal,
                 addToCart,
                 addMultipleToCart,
+                addBatchToCart,
                 removeFromCart,
                 increaseQuantity,
                 decreaseQuantity,

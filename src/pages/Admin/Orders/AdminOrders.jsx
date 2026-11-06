@@ -8,20 +8,34 @@ function AdminOrders() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [reconciliationOnly, setReconciliationOnly] = useState(false);
+
+    // ==================================================
+    // Cancel Order Modal State
+    // ==================================================
+
+    const [cancelModalOrder, setCancelModalOrder] = useState(null);
+    const [cancelReason, setCancelReason] = useState("");
+    const [isCancelling, setIsCancelling] = useState(false);
 
 
     // ==================================================
     // Fetch All Orders
     // ==================================================
 
-    const fetchOrders = async () => {
+    const fetchOrders = async (isReconciliationOnly = reconciliationOnly) => {
 
         try {
 
             setLoading(true);
 
+            const params = {};
+            if (isReconciliationOnly) {
+                params.reconciliationRequired = "true";
+            }
+
             const response =
-                await api.get("/admin/orders");
+                await api.get("/admin/orders", { params });
 
             setOrders(
                 response.data.orders || []
@@ -51,14 +65,14 @@ function AdminOrders() {
 
 
     // ==================================================
-    // Initial Load
+    // Initial Load & Filter Changes
     // ==================================================
 
     useEffect(() => {
 
-        fetchOrders();
+        fetchOrders(reconciliationOnly);
 
-    }, []);
+    }, [reconciliationOnly]);
 
 
     // ==================================================
@@ -134,6 +148,60 @@ function AdminOrders() {
 
         }
 
+    };
+
+
+    // ==================================================
+    // Cancel Order (Dedicated Safe Refund & Table Release)
+    // ==================================================
+
+    const openCancelModal = (order) => {
+        setCancelModalOrder(order);
+        setCancelReason("Admin cancelled order");
+    };
+
+    const closeCancelModal = () => {
+        if (isCancelling) return;
+        setCancelModalOrder(null);
+        setCancelReason("");
+    };
+
+    const handleConfirmCancel = async () => {
+        if (!cancelModalOrder || isCancelling) return;
+
+        try {
+            setIsCancelling(true);
+            const reason = cancelReason.trim() || "Admin cancelled order";
+
+            const response = await api.patch(
+                `/order/${cancelModalOrder._id}/cancel`,
+                { reason }
+            );
+
+            const data = response.data || {};
+            const backendMessage = data.message || "Order cancelled successfully";
+
+            if (data.refunded) {
+                toast.success(backendMessage);
+            } else if (data.order?.paymentStatus === "RefundPending") {
+                toast.success(`${backendMessage} — refund is pending gateway processing.`);
+            } else {
+                toast.success(backendMessage);
+            }
+
+            setCancelModalOrder(null);
+            setCancelReason("");
+            await fetchOrders(reconciliationOnly);
+
+        } catch (error) {
+            console.error("Admin Cancel Order Error:", error);
+            const message =
+                error.response?.data?.message ||
+                "Failed to cancel order";
+            toast.error(message);
+        } finally {
+            setIsCancelling(false);
+        }
     };
 
 
@@ -283,12 +351,36 @@ function AdminOrders() {
                     </div>
 
 
-                    <button
-                        onClick={fetchOrders}
-                        className="rounded-xl border border-[#D8D0C4] bg-white px-5 py-3 font-bold text-[#0B0B0B] shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#D4AF7C] hover:bg-[#F8F5EE] hover:shadow-md active:scale-[0.98]"
-                    >
-                        ↻ Refresh
-                    </button>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <button
+                            onClick={() => setReconciliationOnly((prev) => !prev)}
+                            className={`rounded-xl px-4 py-3 font-bold text-sm shadow-sm transition-all duration-200 active:scale-[0.98] ${
+                                reconciliationOnly
+                                    ? "border-2 border-amber-500 bg-amber-50 text-amber-900 shadow-amber-200/50"
+                                    : "border border-[#D8D0C4] bg-white text-[#756F66] hover:border-[#D4AF7C] hover:bg-[#F8F5EE] hover:text-[#0B0B0B]"
+                            }`}
+                        >
+                            {reconciliationOnly
+                                ? "⚠️ Filtering: Reconciliation Required"
+                                : "Filter: Reconciliation Required"}
+                        </button>
+
+                        {reconciliationOnly && (
+                            <button
+                                onClick={() => setReconciliationOnly(false)}
+                                className="rounded-xl border border-[#D8D0C4] bg-white px-3 py-3 text-xs font-bold text-[#756F66] hover:bg-[#F8F5EE] hover:text-[#0B0B0B] transition-all"
+                            >
+                                Clear Filter
+                            </button>
+                        )}
+
+                        <button
+                            onClick={() => fetchOrders(reconciliationOnly)}
+                            className="rounded-xl border border-[#D8D0C4] bg-white px-5 py-3 font-bold text-[#0B0B0B] shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#D4AF7C] hover:bg-[#F8F5EE] hover:shadow-md active:scale-[0.98]"
+                        >
+                            ↻ Refresh
+                        </button>
+                    </div>
 
                 </div>
 
@@ -390,20 +482,50 @@ function AdminOrders() {
 
 
                                 {/* ==================================================
-                                    Status Badge
+                                    Status Badge & Reconciliation Warning
                                 ================================================== */}
 
-                                <span
-                                    className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusClass(
-                                        order.orderStatus
-                                    )}`}
-                                >
+                                <div className="flex flex-col items-end gap-2">
+                                    <span
+                                        className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusClass(
+                                            order.orderStatus
+                                        )}`}
+                                    >
+                                        {order.orderStatus}
+                                    </span>
 
-                                    {order.orderStatus}
-
-                                </span>
+                                    {order.reconciliationRequired && (
+                                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-400 bg-amber-100 px-3 py-0.5 text-xs font-bold text-amber-900 shadow-sm animate-pulse">
+                                            ⚠️ Reconciliation Required
+                                        </span>
+                                    )}
+                                </div>
 
                             </div>
+
+
+                            {/* ==================================================
+                                Reconciliation Required Alert Banner
+                            ================================================== */}
+
+                            {order.reconciliationRequired && (
+                                <div className="mt-5 rounded-2xl border border-amber-300 bg-amber-50/90 p-4 text-xs text-amber-900 shadow-sm">
+                                    <div className="flex items-start gap-2.5">
+                                        <span className="text-lg leading-none">⚠️</span>
+                                        <div>
+                                            <p className="font-black uppercase tracking-wider text-amber-800">
+                                                Reconciliation Required
+                                            </p>
+                                            <p className="mt-1 text-amber-700">
+                                                This order requires manual staff review. Payment was captured or modified on a cancelled order or a refund failure occurred. Gateway payment ID:{" "}
+                                                <span className="font-mono font-bold">
+                                                    {order.razorpayPaymentId || "N/A"}
+                                                </span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
 
                             {/* ==================================================
@@ -623,15 +745,26 @@ function AdminOrders() {
 
                                 {/* Payment */}
 
-                                <div className="rounded-2xl border border-[#E7E0D6] bg-[#F8F5EE]/70 p-4">
+                                <div className={`rounded-2xl border p-4 ${
+                                    order.reconciliationRequired
+                                        ? "border-amber-300 bg-amber-50/80 shadow-sm"
+                                        : "border-[#E7E0D6] bg-[#F8F5EE]/70"
+                                }`}>
 
                                     <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#8B8175]">
                                         Payment
                                     </p>
 
-                                    <p className="font-medium">
-                                        {order.paymentStatus}
-                                    </p>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        <p className="font-medium">
+                                            {order.paymentStatus}
+                                        </p>
+                                        {order.reconciliationRequired && (
+                                            <span className="rounded-full bg-amber-200/80 px-2 py-0.5 text-[10px] font-black text-amber-900 uppercase">
+                                                Review
+                                            </span>
+                                        )}
+                                    </div>
 
                                 </div>
 
@@ -742,9 +875,8 @@ function AdminOrders() {
 
                                         <button
                                             onClick={() =>
-                                                updateStatus(
-                                                    order._id,
-                                                    "Cancelled"
+                                                openCancelModal(
+                                                    order
                                                 )
                                             }
                                             className="rounded-xl border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition-all duration-200 hover:-translate-y-0.5 hover:bg-red-100 active:scale-[0.98]"
@@ -780,9 +912,8 @@ function AdminOrders() {
 
                                         <button
                                             onClick={() =>
-                                                updateStatus(
-                                                    order._id,
-                                                    "Cancelled"
+                                                openCancelModal(
+                                                    order
                                                 )
                                             }
                                             className="rounded-xl border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-600 transition-all duration-200 hover:-translate-y-0.5 hover:bg-red-100 active:scale-[0.98]"
@@ -866,6 +997,162 @@ function AdminOrders() {
 
                 </div>
 
+            )}
+
+            {/* ==================================================
+                Cancel Order Confirmation Modal
+            ================================================== */}
+            {cancelModalOrder && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+                    onMouseDown={(e) => {
+                        if (e.target === e.currentTarget && !isCancelling) {
+                            closeCancelModal();
+                        }
+                    }}
+                >
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="cancel-modal-title"
+                        className="w-full max-w-lg overflow-hidden rounded-3xl border border-[#D8D0C4] bg-[#FCFBF8] p-6 shadow-2xl sm:p-7"
+                    >
+                        {/* Header */}
+                        <div className="flex items-start justify-between border-b border-[#E8E1D7] pb-5">
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-red-200 bg-red-50 text-xl text-red-600 shadow-sm">
+                                    ✕
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#B88A4A]">
+                                        Order Management
+                                    </p>
+                                    <h2
+                                        id="cancel-modal-title"
+                                        className="mt-0.5 text-2xl font-black text-[#0B0B0B]"
+                                    >
+                                        Cancel Order
+                                    </h2>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                disabled={isCancelling}
+                                onClick={closeCancelModal}
+                                className="rounded-xl border border-transparent p-2 text-xl font-bold text-[#8B8175] transition hover:border-[#D8D0C4] hover:bg-white hover:text-[#0B0B0B] disabled:opacity-40"
+                                aria-label="Close dialog"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Order Details Summary */}
+                        <div className="mt-5 space-y-3">
+                            <div className="rounded-2xl border border-[#E7E0D6] bg-white p-4">
+                                <div className="flex items-center justify-between">
+                                    <p className="font-mono text-sm font-black text-[#0B0B0B]">
+                                        Order #{cancelModalOrder._id.slice(-6).toUpperCase()}
+                                    </p>
+                                    <span className="rounded-full border border-[#D8D0C4] bg-[#F8F5EE] px-2.5 py-0.5 text-xs font-bold text-[#756F66]">
+                                        {cancelModalOrder.orderStatus}
+                                    </span>
+                                </div>
+                                <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-[#756F66]">
+                                    <p>
+                                        Customer:{" "}
+                                        <span className="font-semibold text-[#0B0B0B]">
+                                            {cancelModalOrder.user?.fullName || "Guest"}
+                                        </span>
+                                    </p>
+                                    <p>
+                                        Total:{" "}
+                                        <span className="font-semibold text-[#0B0B0B]">
+                                            ₹{cancelModalOrder.totalPrice}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Refund & Payment Impact Notice */}
+                            {["Paid", "PartiallyRefunded"].includes(cancelModalOrder.paymentStatus) ? (
+                                <div className="rounded-2xl border border-amber-300 bg-amber-50/90 p-4 text-xs text-amber-900">
+                                    <p className="font-bold flex items-center gap-1.5 text-amber-900">
+                                        <span>⚠️</span> Gateway Refund Will Be Initiated
+                                    </p>
+                                    <p className="mt-1 leading-relaxed text-amber-800">
+                                        This order has payment status{" "}
+                                        <span className="font-bold">{cancelModalOrder.paymentStatus}</span>.
+                                        Cancelling will automatically initiate a refund of{" "}
+                                        <span className="font-bold">
+                                            ₹{Math.max(0, cancelModalOrder.totalPrice - (cancelModalOrder.amountRefunded || 0))}
+                                        </span>{" "}
+                                        via Razorpay. Gateway processing may be instant or pending.
+                                    </p>
+                                </div>
+                            ) : cancelModalOrder.paymentStatus === "RefundPending" ? (
+                                <div className="rounded-2xl border border-amber-300 bg-amber-50/90 p-4 text-xs text-amber-900">
+                                    <p className="font-bold flex items-center gap-1.5 text-amber-900">
+                                        <span>⏳</span> Refund Already Pending
+                                    </p>
+                                    <p className="mt-1 leading-relaxed text-amber-800">
+                                        A refund for this order is currently pending processing with Razorpay.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="rounded-2xl border border-blue-200 bg-blue-50/80 p-4 text-xs text-blue-900">
+                                    <p className="font-bold flex items-center gap-1.5 text-blue-900">
+                                        <span>ℹ️</span> No Gateway Refund Required
+                                    </p>
+                                    <p className="mt-1 leading-relaxed text-blue-800">
+                                        Payment status is <span className="font-bold">{cancelModalOrder.paymentStatus}</span> (unpaid online). Cancelling will update the order status without a gateway refund.
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Cancellation Reason Input */}
+                            <div className="pt-2">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-[#5F584F] mb-1.5">
+                                    Cancellation Reason
+                                </label>
+                                <input
+                                    type="text"
+                                    value={cancelReason}
+                                    onChange={(e) => setCancelReason(e.target.value)}
+                                    disabled={isCancelling}
+                                    placeholder="Reason for cancellation (e.g. Kitchen unavailable)"
+                                    className="w-full rounded-xl border border-[#D8D0C4] bg-white px-4 py-2.5 text-sm text-[#0B0B0B] outline-none transition focus:border-[#D4AF7C] focus:ring-2 focus:ring-[#D4AF7C]/20 disabled:opacity-60"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Modal Action Buttons */}
+                        <div className="mt-6 flex flex-wrap items-center justify-end gap-3 border-t border-[#E8E1D7] pt-5">
+                            <button
+                                type="button"
+                                disabled={isCancelling}
+                                onClick={closeCancelModal}
+                                className="rounded-xl border border-[#D8CDBB] bg-white px-5 py-2.5 text-sm font-semibold text-[#2B1F14] transition hover:bg-[#F0E9DD] disabled:opacity-50"
+                            >
+                                Keep Order
+                            </button>
+                            <button
+                                type="button"
+                                disabled={isCancelling}
+                                onClick={handleConfirmCancel}
+                                className="flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-red-600/20 transition hover:bg-red-700 disabled:opacity-50 active:scale-[0.98]"
+                            >
+                                {isCancelling ? (
+                                    <>
+                                        <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                        Cancelling...
+                                    </>
+                                ) : (
+                                    "Confirm Cancellation"
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
         </div>

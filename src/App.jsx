@@ -31,6 +31,7 @@ import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
 import Cart from "./pages/Cart/Cart";
 import Orders from "./pages/Orders/Orders";
+import RegularOrders from "./pages/RegularOrders/RegularOrders";
 import Food3DTest from "./pages/Food3DTest";
 import ARTest from "./pages/ARTest";
 import MarkerAR from "./pages/AR/MarkerAR";
@@ -110,6 +111,17 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <Orders />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* Regular Orders (Milestone 4) */}
+
+                    <Route
+                        path="/regular-orders"
+                        element={
+                            <ProtectedRoute>
+                                <RegularOrders />
                             </ProtectedRoute>
                         }
                     />

@@ -1,6 +1,9 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { FiBookmark } from "react-icons/fi";
 import api from "../services/api";
+import RateDishModal from "./Reviews/RateDishModal";
+import SaveToCollectionModal from "./RegularOrders/SaveToCollectionModal";
 
 const getFoodImage = (item) => {
     if (item.menu?.image) {
@@ -35,6 +38,9 @@ function OrderCard({ order, refreshOrders }) {
     const [tableClosed, setTableClosed] = useState(
         order.tableClosed === true
     );
+
+    const [ratingDish, setRatingDish] = useState(null);
+    const [savingDish, setSavingDish] = useState(null);
 
 
     // ==================================================
@@ -564,6 +570,16 @@ function OrderCard({ order, refreshOrders }) {
 
 
     // ==================================================
+    // Determine Review Eligibility (Milestone 2)
+    // ==================================================
+
+    const canReviewOrder =
+        order.orderStatus === "Delivered" &&
+        ["Paid", "PartiallyRefunded"].includes(order.paymentStatus) &&
+        order.reconciliationRequired !== true;
+
+
+    // ==================================================
     // Render
     // ==================================================
 
@@ -933,16 +949,39 @@ function OrderCard({ order, refreshOrders }) {
                                 </div>
 
 
-                                <p className="font-semibold">
+                                <div className="text-right flex flex-col items-end gap-1.5">
+                                    <p className="font-semibold">
+                                        ₹
+                                        {Number(
+                                            item.price || 0
+                                        ).toLocaleString(
+                                            "en-IN"
+                                        )}
+                                    </p>
 
-                                    ₹
-                                    {Number(
-                                        item.price || 0
-                                    ).toLocaleString(
-                                        "en-IN"
-                                    )}
+                                    <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                                        {item.menu && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setSavingDish(item.menu)}
+                                                className="inline-flex items-center gap-1 rounded-lg border border-[#D8D0C4] bg-[#FDFBF7] px-2.5 py-1 text-xs font-semibold text-[#5F584F] transition hover:border-[#D4AF7C] hover:text-[#8B6A3E] shadow-2xs"
+                                                title="Save dish to regular orders"
+                                            >
+                                                <FiBookmark size={11} /> Save to Regulars
+                                            </button>
+                                        )}
 
-                                </p>
+                                        {canReviewOrder && item.menu && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setRatingDish(item.menu)}
+                                                className="inline-flex items-center gap-1 rounded-lg border border-[#D4AF7C]/60 bg-[#FDFBF7] px-2.5 py-1 text-xs font-bold text-[#8B6A3E] transition hover:bg-[#0B0B0B] hover:text-[#D4AF7C] shadow-2xs"
+                                            >
+                                                ★ Rate Dish
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
 
                             </div>
 
@@ -1133,6 +1172,29 @@ function OrderCard({ order, refreshOrders }) {
                 </div>
 
             )}
+
+            {/* ==================================================
+                RATE DISH MODAL (Milestone 2)
+            ================================================== */}
+
+            <RateDishModal
+                dish={ratingDish}
+                orderId={order._id}
+                isOpen={!!ratingDish}
+                onClose={() => setRatingDish(null)}
+                onReviewSubmitted={() => {
+                    if (refreshOrders) refreshOrders();
+                }}
+            />
+
+            {/* ==================================================
+                SAVE TO REGULAR ORDERS MODAL (Milestone 4)
+            ================================================== */}
+
+            <SaveToCollectionModal
+                dish={savingDish}
+                onClose={() => setSavingDish(null)}
+            />
 
         </div>
 

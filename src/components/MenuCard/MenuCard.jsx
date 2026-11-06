@@ -1,4 +1,4 @@
-import { FiClock, FiEye, FiMinus, FiPlus } from "react-icons/fi";
+import { FiClock, FiEye, FiMinus, FiPlus, FiBookmark, FiCheck } from "react-icons/fi";
 import toast from "react-hot-toast";
 import { useCart } from "../../context/CartContext";
 import { useNavigate } from "react-router-dom";
@@ -73,7 +73,14 @@ function getFoodModel(item) {
     return null;
 }
 
-function MenuCard({ item }) {
+function MenuCard({
+    item,
+    onOpenReviews,
+    onSaveToCollection,
+    targetCollection,
+    onAddToTargetCollection,
+    onUpdateTargetCollectionQuantity
+}) {
     const {
         cartItems,
         addToCart,
@@ -86,6 +93,14 @@ function MenuCard({ item }) {
         (cartEntry) => cartEntry._id === item._id
     );
     const quantity = cartItem ? Number(cartItem.quantity || 0) : 0;
+
+    // Target collection item check (Milestone 4 add-to-collection mode)
+    const collectionItem = targetCollection?.items?.find((it) => {
+        const mId = it.menu?._id || it.menu;
+        return mId && mId.toString() === item._id.toString();
+    });
+    const isInTargetCollection = Boolean(collectionItem);
+    const targetCollectionQty = collectionItem ? Number(collectionItem.quantity || 1) : 1;
 
     const available = Boolean(item.isAvailable);
     const foodImage = getFoodImage(item);
@@ -198,12 +213,45 @@ function MenuCard({ item }) {
                         </span>
                     )}
 
-                    {item.rating > 0 && (
-                        <span className="rounded-full border border-white/70 bg-white/95 px-3 py-1.5 text-xs font-bold text-[#2B1F14] shadow-sm backdrop-blur">
-                            ★ {item.rating}
-                        </span>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onSaveToCollection?.(item);
+                            }}
+                            aria-label={`Save ${item.name} to regular order`}
+                            title="Save to Regular Order"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/80 bg-white/95 text-xs text-[#2B1F14] shadow-sm backdrop-blur transition hover:bg-[#0B0B0B] hover:border-[#D4AF7C] hover:text-[#D4AF7C] active:scale-95"
+                        >
+                            <FiBookmark size={14} />
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onOpenReviews?.(item);
+                            }}
+                            aria-label={`View reviews for ${item.name}`}
+                            className="inline-flex items-center gap-1 rounded-full border border-white/80 bg-white/95 px-3 py-1.5 text-xs font-bold text-[#2B1F14] shadow-sm backdrop-blur transition hover:bg-[#FDFBF7] hover:border-[#D4AF7C] active:scale-95"
+                        >
+                            <span className="text-[#D4AF7C]">★</span>
+                            <span>{item.rating > 0 ? Number(item.rating).toFixed(1) : "New"}</span>
+                            {item.numReviews > 0 && (
+                                <span className="text-gray-400 font-normal">({item.numReviews})</span>
+                            )}
+                        </button>
+                    </div>
                 </div>
+
+                {/* SEASONAL SPECIAL BADGE */}
+                {item.isSeasonalSpecial && (
+                    <div className="absolute bottom-3 left-3 z-10 inline-flex items-center gap-1.5 rounded-full border border-[#D4AF7C]/60 bg-[#0B0B0B]/90 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-[#D4AF7C] shadow-lg backdrop-blur">
+                        <span>✨</span>
+                        <span>Seasonal Special</span>
+                    </div>
+                )}
 
                 {/* UNAVAILABLE */}
                 {!available && (
@@ -218,11 +266,20 @@ function MenuCard({ item }) {
             {/* ================= CONTENT ================= */}
             <div className="flex flex-1 flex-col p-5">
 
-                {item.category?.name && (
-                    <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#B88A4A]">
-                        {item.category.name}
-                    </p>
-                )}
+                <div className="flex items-center justify-between gap-2">
+                    {item.category?.name ? (
+                        <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#B88A4A]">
+                            {item.category.name}
+                        </p>
+                    ) : (
+                        <div />
+                    )}
+                    {item.isSeasonalSpecial && (
+                        <span className="rounded-md border border-[#D4AF7C]/40 bg-[#FAF6ED] px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#8F6B2C]">
+                            ✨ Seasonal Special
+                        </span>
+                    )}
+                </div>
 
                 <h2 className="mt-1.5 text-xl font-extrabold text-[#0B0B0B]">
                     {item.name}
@@ -280,6 +337,62 @@ function MenuCard({ item }) {
                             </button>
                         )}
                     </div>
+
+                    {/* COLLECTION MODE ACTION (Milestone 4) */}
+                    {targetCollection && available && (
+                        <div className="mb-3">
+                            {isInTargetCollection ? (
+                                <div className="flex h-11 w-full items-center justify-between rounded-xl border border-[#D4AF7C] bg-[#FAF6ED] px-3 py-1 shadow-2xs">
+                                    <span className="flex items-center gap-1.5 text-xs font-bold text-[#8B6A3E]">
+                                        <FiCheck size={14} className="text-emerald-600" />
+                                        <span>In {targetCollection.name}</span>
+                                    </span>
+                                    <div className="flex items-center gap-1.5">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onUpdateTargetCollectionQuantity?.(item, targetCollectionQty - 1);
+                                            }}
+                                            title="Decrease quantity in collection"
+                                            aria-label={`Decrease ${item.name} quantity in ${targetCollection.name}`}
+                                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-white border border-[#D4AF7C]/40 text-[#2B1F14] hover:bg-[#D4AF7C] hover:text-[#0B0B0B] transition active:scale-95"
+                                        >
+                                            <FiMinus size={12} />
+                                        </button>
+                                        <span className="min-w-5 text-center text-xs font-black text-[#0B0B0B]">
+                                            {targetCollectionQty}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onUpdateTargetCollectionQuantity?.(item, targetCollectionQty + 1);
+                                            }}
+                                            title="Increase quantity in collection"
+                                            aria-label={`Increase ${item.name} quantity in ${targetCollection.name}`}
+                                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-white border border-[#D4AF7C]/40 text-[#2B1F14] hover:bg-[#D4AF7C] hover:text-[#0B0B0B] transition active:scale-95"
+                                        >
+                                            <FiPlus size={12} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onAddToTargetCollection?.(item, 1);
+                                    }}
+                                    aria-label={`Add ${item.name} to ${targetCollection.name}`}
+                                    className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#D4AF7C] bg-[#FFFDF9] text-xs font-black uppercase tracking-wider text-[#8B6A3E] shadow-xs transition hover:bg-[#D4AF7C] hover:text-[#0B0B0B] active:scale-[.99]"
+                                >
+                                    <FiBookmark size={14} className="text-[#D4AF7C]" />
+                                    <span>+ Add to {targetCollection.name}</span>
+                                </button>
+                            )}
+                        </div>
+                    )}
 
                     {/* ADD TO CART / QUANTITY STEPPER */}
                     {!available && quantity === 0 ? (

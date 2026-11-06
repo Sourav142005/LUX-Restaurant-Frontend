@@ -100,6 +100,12 @@ function Navbar() {
                                     Orders
                                 </NavLink>
                             )}
+
+                            {isAuthenticated && (
+                                <NavLink to="/regular-orders" className={linkClass}>
+                                    Regular Orders
+                                </NavLink>
+                            )}
                         </div>
 
                         {/* DESKTOP ACTIONS */}
@@ -233,6 +239,16 @@ function Navbar() {
                                         className={mobileLinkClass}
                                     >
                                         Orders
+                                    </NavLink>
+                                )}
+
+                                {isAuthenticated && (
+                                    <NavLink
+                                        onClick={closeMenu}
+                                        to="/regular-orders"
+                                        className={mobileLinkClass}
+                                    >
+                                        My Regular Orders
                                     </NavLink>
                                 )}
 

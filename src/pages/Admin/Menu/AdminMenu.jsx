@@ -16,6 +16,9 @@ function AdminMenu() {
     const [search, setSearch] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("All");
     const [vegFilter, setVegFilter] = useState("All");
+    const [specialFilter, setSpecialFilter] = useState("All");
+
+    const [managingSpecial, setManagingSpecial] = useState(null);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -24,8 +27,59 @@ function AdminMenu() {
         category: "",
         isVeg: true,
         preparationTime: "",
-        model3D: ""
+        model3D: "",
+        isSeasonalSpecial: false,
+        specialStartDate: "",
+        specialEndDate: ""
     });
+
+    // =========================================
+    // Special Date Helpers (Asia/Kolkata)
+    // =========================================
+
+    const formatDateForInput = (dateVal) => {
+        if (!dateVal) return "";
+        try {
+            const d = new Date(dateVal);
+            if (isNaN(d.getTime())) return "";
+            return new Intl.DateTimeFormat("en-CA", {
+                timeZone: "Asia/Kolkata",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit"
+            }).format(d);
+        } catch {
+            return "";
+        }
+    };
+
+    const formatSpecialDateDisplay = (dateVal) => {
+        if (!dateVal) return "None";
+        try {
+            const d = new Date(dateVal);
+            if (isNaN(d.getTime())) return "None";
+            return new Intl.DateTimeFormat("en-IN", {
+                timeZone: "Asia/Kolkata",
+                day: "numeric",
+                month: "short",
+                year: "numeric"
+            }).format(d);
+        } catch {
+            return "None";
+        }
+    };
+
+    const getSpecialStatus = (menuItem) => {
+        if (!menuItem.isSeasonalSpecial) return "Not a Special";
+        const now = new Date();
+        if (menuItem.specialEndDate && new Date(menuItem.specialEndDate) < now) {
+            return "Expired";
+        }
+        if (menuItem.specialStartDate && new Date(menuItem.specialStartDate) > now) {
+            return "Scheduled";
+        }
+        return "Active";
+    };
 
 
     // =========================================
@@ -135,7 +189,10 @@ function AdminMenu() {
             category: "",
             isVeg: true,
             preparationTime: "",
-            model3D: ""
+            model3D: "",
+            isSeasonalSpecial: false,
+            specialStartDate: "",
+            specialEndDate: ""
         });
 
         setEditingMenu(null);
@@ -159,7 +216,10 @@ function AdminMenu() {
             category: "",
             isVeg: true,
             preparationTime: "",
-            model3D: ""
+            model3D: "",
+            isSeasonalSpecial: false,
+            specialStartDate: "",
+            specialEndDate: ""
         });
 
         setShowForm(true);
@@ -191,7 +251,10 @@ function AdminMenu() {
             isVeg: menu.isVeg ?? true,
             preparationTime:
                 menu.preparationTime || "",
-            model3D: menu.model3D || ""
+            model3D: menu.model3D || "",
+            isSeasonalSpecial: Boolean(menu.isSeasonalSpecial),
+            specialStartDate: formatDateForInput(menu.specialStartDate),
+            specialEndDate: formatDateForInput(menu.specialEndDate)
         });
 
         setShowForm(true);
@@ -247,11 +310,30 @@ function AdminMenu() {
             }
 
 
+            if (formData.isSeasonalSpecial && formData.specialStartDate && formData.specialEndDate) {
+                if (new Date(formData.specialEndDate) < new Date(formData.specialStartDate)) {
+                    toast.error("Special expiry date cannot be earlier than start date");
+                    return;
+                }
+            }
+
+            const payload = {
+                ...formData,
+                specialStartDate:
+                    formData.isSeasonalSpecial && formData.specialStartDate
+                        ? formData.specialStartDate
+                        : null,
+                specialEndDate:
+                    formData.isSeasonalSpecial && formData.specialEndDate
+                        ? formData.specialEndDate
+                        : null
+            };
+
             if (editingMenu) {
 
                 await api.put(
                     `/menu/${editingMenu._id}`,
-                    formData
+                    payload
                 );
 
                 toast.success(
@@ -262,7 +344,7 @@ function AdminMenu() {
 
                 await api.post(
                     "/menu",
-                    formData
+                    payload
                 );
 
                 toast.success(
@@ -362,6 +444,85 @@ function AdminMenu() {
         }
     };
 
+    // =========================================
+    // Seasonal Special Management (Milestone 3)
+    // =========================================
+
+    const handleOpenManageSpecial = (menu) => {
+        setManagingSpecial({
+            menu,
+            isSeasonalSpecial: Boolean(menu.isSeasonalSpecial),
+            specialStartDate: formatDateForInput(menu.specialStartDate),
+            specialEndDate: formatDateForInput(menu.specialEndDate),
+            isSubmitting: false
+        });
+    };
+
+    const handleSaveSeasonalSpecial = async (e) => {
+        e.preventDefault();
+        if (!managingSpecial) return;
+
+        const { menu, isSeasonalSpecial, specialStartDate, specialEndDate } = managingSpecial;
+
+        if (isSeasonalSpecial && specialStartDate && specialEndDate) {
+            if (new Date(specialEndDate) < new Date(specialStartDate)) {
+                toast.error("Special expiry date cannot be earlier than start date");
+                return;
+            }
+        }
+
+        try {
+            setManagingSpecial(prev => ({ ...prev, isSubmitting: true }));
+
+            await api.put(`/menu/${menu._id}/seasonal-special`, {
+                isSeasonalSpecial,
+                specialStartDate: isSeasonalSpecial && specialStartDate ? specialStartDate : null,
+                specialEndDate: isSeasonalSpecial && specialEndDate ? specialEndDate : null
+            });
+
+            toast.success(
+                isSeasonalSpecial
+                    ? "Seasonal special updated successfully"
+                    : "Special status removed"
+            );
+
+            setManagingSpecial(null);
+            await fetchMenus();
+
+        } catch (error) {
+            console.error("Save Seasonal Special Error:", error);
+            toast.error(
+                error.response?.data?.message ||
+                "Failed to update seasonal special"
+            );
+            setManagingSpecial(prev => ({ ...prev, isSubmitting: false }));
+        }
+    };
+
+    const handleRemoveSeasonalSpecial = async (menuId) => {
+        try {
+            setManagingSpecial(prev => ({ ...prev, isSubmitting: true }));
+
+            await api.put(`/menu/${menuId}/seasonal-special`, {
+                isSeasonalSpecial: false,
+                specialStartDate: null,
+                specialEndDate: null
+            });
+
+            toast.success("Seasonal special removed");
+            setManagingSpecial(null);
+            await fetchMenus();
+
+        } catch (error) {
+            console.error("Remove Seasonal Special Error:", error);
+            toast.error(
+                error.response?.data?.message ||
+                "Failed to remove seasonal special"
+            );
+            setManagingSpecial(prev => ({ ...prev, isSubmitting: false }));
+        }
+    };
+
 
     // =========================================
     // Filter Menu
@@ -401,11 +562,20 @@ function AdminMenu() {
                 (vegFilter === "Veg" && menu.isVeg) ||
                 (vegFilter === "Non-Veg" && !menu.isVeg);
 
+            const specialStatus = getSpecialStatus(menu);
+            const matchesSpecial =
+                specialFilter === "All" ||
+                (specialFilter === "All Specials" && menu.isSeasonalSpecial) ||
+                (specialFilter === "Active" && specialStatus === "Active") ||
+                (specialFilter === "Scheduled" && specialStatus === "Scheduled") ||
+                (specialFilter === "Expired" && specialStatus === "Expired") ||
+                (specialFilter === "Regular" && !menu.isSeasonalSpecial);
 
             return (
                 matchesSearch &&
                 matchesCategory &&
-                matchesVeg
+                matchesVeg &&
+                matchesSpecial
             );
 
         });
@@ -414,7 +584,8 @@ function AdminMenu() {
         menus,
         search,
         categoryFilter,
-        vegFilter
+        vegFilter,
+        specialFilter
     ]);
 
 
@@ -432,11 +603,16 @@ function AdminMenu() {
             menu => !menu.isVeg
         ).length;
 
+        const activeSpecials = menus.filter(
+            menu => getSpecialStatus(menu) === "Active"
+        ).length;
+
         return {
             total: menus.length,
             veg,
             nonVeg,
-            categories: categories.length
+            categories: categories.length,
+            activeSpecials
         };
 
     }, [menus, categories]);
@@ -528,7 +704,7 @@ function AdminMenu() {
             {/* Statistics */}
             {/* ================================= */}
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
 
                 <div className="rounded-3xl border border-[#D8D0C4] bg-white p-6 shadow-sm">
 
@@ -577,6 +753,19 @@ function AdminMenu() {
 
                     <p className="text-3xl font-bold mt-1">
                         {statistics.categories}
+                    </p>
+
+                </div>
+
+
+                <div className="bg-[#FAF6ED] border border-[#D4AF7C]/40 rounded-xl p-5">
+
+                    <p className="text-[#8F6B2C] font-semibold text-sm">
+                        ✨ Active Specials
+                    </p>
+
+                    <p className="text-3xl font-bold mt-1 text-[#0B0B0B]">
+                        {statistics.activeSpecials}
                     </p>
 
                 </div>
@@ -811,6 +1000,82 @@ function AdminMenu() {
                         </div>
 
 
+                        {/* Seasonal Special (Milestone 3) */}
+
+                        <div className="md:col-span-2 rounded-2xl border border-[#D4AF7C]/40 bg-[#FCFBF8] p-5">
+
+                            <div className="flex items-center justify-between">
+
+                                <label className="inline-flex items-center gap-3 cursor-pointer">
+
+                                    <input
+                                        type="checkbox"
+                                        name="isSeasonalSpecial"
+                                        checked={formData.isSeasonalSpecial}
+                                        onChange={handleChange}
+                                        className="h-5 w-5 accent-[#D4AF7C]"
+                                    />
+
+                                    <div>
+                                        <span className="font-bold text-[#0B0B0B] text-base">
+                                            ✨ Mark as Seasonal Special
+                                        </span>
+                                        <p className="text-xs text-[#756F66]">
+                                            Feature this dish in the customer Seasonal Specials curation
+                                        </p>
+                                    </div>
+
+                                </label>
+
+                                {formData.isSeasonalSpecial && (
+                                    <span className="rounded-full border border-[#D4AF7C] bg-[#FAF6ED] px-3 py-1 text-xs font-black text-[#8F6B2C]">
+                                        Seasonal Special
+                                    </span>
+                                )}
+
+                            </div>
+
+                            {formData.isSeasonalSpecial && (
+                                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-[#D8D0C4]/60 pt-4">
+
+                                    <div>
+                                        <label className="mb-2 block text-xs font-black uppercase tracking-[0.12em] text-[#5F584F]">
+                                            Special Start Date (Optional)
+                                        </label>
+                                        <input
+                                            type="date"
+                                            name="specialStartDate"
+                                            value={formData.specialStartDate}
+                                            onChange={handleChange}
+                                            className="w-full rounded-xl border border-[#D8D0C4] bg-white px-4 py-2.5 text-sm text-[#0B0B0B] outline-none transition-all focus:border-[#D4AF7C] focus:ring-4 focus:ring-[#D4AF7C]/10"
+                                        />
+                                        <p className="mt-1 text-[11px] text-[#756F66]">
+                                            Leave blank to activate immediately
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <label className="mb-2 block text-xs font-black uppercase tracking-[0.12em] text-[#5F584F]">
+                                            Special Expiry Date (Optional)
+                                        </label>
+                                        <input
+                                            type="date"
+                                            name="specialEndDate"
+                                            value={formData.specialEndDate}
+                                            onChange={handleChange}
+                                            className="w-full rounded-xl border border-[#D8D0C4] bg-white px-4 py-2.5 text-sm text-[#0B0B0B] outline-none transition-all focus:border-[#D4AF7C] focus:ring-4 focus:ring-[#D4AF7C]/10"
+                                        />
+                                        <p className="mt-1 text-[11px] text-[#756F66]">
+                                            Leave blank for an indefinite special
+                                        </p>
+                                    </div>
+
+                                </div>
+                            )}
+
+                        </div>
+
+
                         {/* Buttons */}
 
                         <div className="md:col-span-2 flex gap-3 pt-2">
@@ -850,7 +1115,7 @@ function AdminMenu() {
 
             <div className="rounded-3xl border border-[#D8D0C4] bg-white p-6 shadow-sm">
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 
 
                     {/* Search */}
@@ -936,6 +1201,51 @@ function AdminMenu() {
 
                             <option value="Non-Veg">
                                 Non-Vegetarian
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    {/* Special Filter (Milestone 3) */}
+
+                    <div>
+
+                        <label className="mb-2 block text-xs font-black uppercase tracking-[0.12em] text-[#5F584F]">
+                            Special Status
+                        </label>
+
+                        <select
+                            value={specialFilter}
+                            onChange={(e) =>
+                                setSpecialFilter(e.target.value)
+                            }
+                            className="w-full border rounded-lg px-4 py-3"
+                        >
+
+                            <option value="All">
+                                All Items
+                            </option>
+
+                            <option value="All Specials">
+                                All Specials
+                            </option>
+
+                            <option value="Active">
+                                ✨ Active Specials
+                            </option>
+
+                            <option value="Scheduled">
+                                ⏳ Scheduled Specials
+                            </option>
+
+                            <option value="Expired">
+                                ⌛ Expired Specials
+                            </option>
+
+                            <option value="Regular">
+                                Regular Dishes
                             </option>
 
                         </select>
@@ -1074,9 +1384,9 @@ function AdminMenu() {
 
                             </div>
 
-                            {/* Availability */}
+                            {/* Availability & Special Status */}
 
-                            <div className="mt-4">
+                            <div className="mt-4 flex flex-wrap items-center gap-2">
 
                                 <span
                                     className={`inline-flex rounded-full border px-3 py-1.5 text-[10px] font-black tracking-wide ${
@@ -1090,22 +1400,71 @@ function AdminMenu() {
                                         : "UNAVAILABLE"}
                                 </span>
 
+                                {(() => {
+                                    const status = getSpecialStatus(menu);
+                                    if (status === "Active") {
+                                        return (
+                                            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-[10px] font-black tracking-wide text-emerald-800 shadow-xs">
+                                                <span>✨</span> SPECIAL: ACTIVE
+                                            </span>
+                                        );
+                                    }
+                                    if (status === "Scheduled") {
+                                        return (
+                                            <span className="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2.5 py-1 text-[10px] font-black tracking-wide text-sky-800 shadow-xs">
+                                                <span>⏳</span> SPECIAL: SCHEDULED
+                                            </span>
+                                        );
+                                    }
+                                    if (status === "Expired") {
+                                        return (
+                                            <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-[10px] font-black tracking-wide text-amber-800 shadow-xs">
+                                                <span>⌛</span> SPECIAL: EXPIRED
+                                            </span>
+                                        );
+                                    }
+                                    return (
+                                        <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[10px] font-semibold text-gray-500">
+                                            Not a Special
+                                        </span>
+                                    );
+                                })()}
+
                             </div>
+
+                            {menu.isSeasonalSpecial && (menu.specialStartDate || menu.specialEndDate) && (
+                                <p className="mt-2 text-xs font-medium text-[#756F66]">
+                                    📅 {formatSpecialDateDisplay(menu.specialStartDate)} → {formatSpecialDateDisplay(menu.specialEndDate)}
+                                </p>
+                            )}
 
                             {/* Actions */}
 
-                            <div className="mt-5 flex gap-3">
+                            <div className="mt-5 flex gap-2">
 
                                 <button
                                     onClick={() => handleEdit(menu)}
-                                    className="flex-1 rounded-xl bg-[#0B0B0B] py-2.5 font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#2B1F14] active:scale-[0.98]"
+                                    className="flex-1 rounded-xl bg-[#0B0B0B] py-2.5 text-xs font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#2B1F14] active:scale-[0.98]"
                                 >
                                     Edit
                                 </button>
 
                                 <button
+                                    type="button"
+                                    onClick={() => handleOpenManageSpecial(menu)}
+                                    className={`rounded-xl px-3 py-2.5 text-xs font-bold transition-all duration-200 active:scale-[0.98] ${
+                                        menu.isSeasonalSpecial
+                                            ? "border border-[#D4AF7C] bg-[#FAF6ED] text-[#8F6B2C] hover:bg-[#F5ECE0]"
+                                            : "border border-[#D8D0C4] bg-[#F8F5EE] text-[#5F584F] hover:border-[#D4AF7C] hover:bg-white"
+                                    }`}
+                                    title="Configure Seasonal Special"
+                                >
+                                    ✨ Special
+                                </button>
+
+                                <button
                                     onClick={() => handleToggleAvailability(menu)}
-                                    className={`flex-1 rounded-xl py-2.5 font-bold transition-all duration-200 active:scale-[0.98] ${
+                                    className={`flex-1 rounded-xl py-2.5 text-xs font-bold transition-all duration-200 active:scale-[0.98] ${
                                         menu.isAvailable
                                             ? "border border-gray-200 bg-gray-100 text-gray-700 hover:bg-gray-200"
                                             : "bg-green-600 text-white hover:bg-green-700 hover:-translate-y-0.5"
@@ -1134,6 +1493,149 @@ function AdminMenu() {
 
                 </div>
 
+            )}
+
+            {/* ================================= */}
+            {/* Quick Special Management Modal    */}
+            {/* ================================= */}
+
+            {managingSpecial && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-lg overflow-hidden rounded-3xl border border-[#D4AF7C]/40 bg-white p-6 shadow-2xl">
+                        <div className="flex items-center justify-between pb-4 border-b border-[#D8D0C4]">
+                            <div>
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#B88A4A]">
+                                    Seasonal Special Management
+                                </span>
+                                <h3 className="text-xl font-black text-[#0B0B0B] mt-0.5">
+                                    {managingSpecial.menu.name}
+                                </h3>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setManagingSpecial(null)}
+                                className="text-gray-400 hover:text-black text-2xl font-bold leading-none p-1"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSaveSeasonalSpecial} className="mt-5 space-y-5">
+                            <div className="rounded-2xl border border-[#D4AF7C]/40 bg-[#FAF6ED]/70 p-4">
+                                <label className="inline-flex items-center gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={managingSpecial.isSeasonalSpecial}
+                                        onChange={(e) =>
+                                            setManagingSpecial((prev) => ({
+                                                ...prev,
+                                                isSeasonalSpecial: e.target.checked
+                                            }))
+                                        }
+                                        className="h-5 w-5 accent-[#D4AF7C]"
+                                    />
+                                    <div>
+                                        <span className="font-bold text-[#0B0B0B] text-base">
+                                            Mark as Seasonal Special
+                                        </span>
+                                        <p className="text-xs text-[#756F66]">
+                                            Feature this dish in the customer Seasonal Specials section
+                                        </p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            {managingSpecial.isSeasonalSpecial && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="mb-1.5 block text-xs font-black uppercase tracking-[0.1em] text-[#5F584F]">
+                                            Start Date
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={managingSpecial.specialStartDate}
+                                            onChange={(e) =>
+                                                setManagingSpecial((prev) => ({
+                                                    ...prev,
+                                                    specialStartDate: e.target.value
+                                                }))
+                                            }
+                                            className="w-full rounded-xl border border-[#D8D0C4] bg-[#FCFBF8] px-3.5 py-2.5 text-sm text-[#0B0B0B] outline-none focus:border-[#D4AF7C] focus:ring-2 focus:ring-[#D4AF7C]/20"
+                                        />
+                                        <p className="mt-1 text-[11px] text-[#756F66]">
+                                            Optional (starts immediately)
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <label className="mb-1.5 block text-xs font-black uppercase tracking-[0.1em] text-[#5F584F]">
+                                            Expiry Date
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={managingSpecial.specialEndDate}
+                                            onChange={(e) =>
+                                                setManagingSpecial((prev) => ({
+                                                    ...prev,
+                                                    specialEndDate: e.target.value
+                                                }))
+                                            }
+                                            className="w-full rounded-xl border border-[#D8D0C4] bg-[#FCFBF8] px-3.5 py-2.5 text-sm text-[#0B0B0B] outline-none focus:border-[#D4AF7C] focus:ring-2 focus:ring-[#D4AF7C]/20"
+                                        />
+                                        <p className="mt-1 text-[11px] text-[#756F66]">
+                                            Optional (never expires)
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Live computed preview */}
+                            <div className="rounded-xl bg-[#F8F5EE] p-3 text-xs flex items-center justify-between">
+                                <span className="text-[#756F66] font-medium">Computed Special Status:</span>
+                                <span className="font-bold">
+                                    {!managingSpecial.isSeasonalSpecial
+                                        ? "Not a Special"
+                                        : managingSpecial.specialEndDate &&
+                                          new Date(managingSpecial.specialEndDate + "T23:59:59.999+05:30") < new Date()
+                                        ? "⌛ Expired"
+                                        : managingSpecial.specialStartDate &&
+                                          new Date(managingSpecial.specialStartDate + "T00:00:00.000+05:30") > new Date()
+                                        ? "⏳ Scheduled"
+                                        : "✨ Active Special"}
+                                </span>
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="submit"
+                                    disabled={managingSpecial.isSubmitting}
+                                    className="flex-1 rounded-xl bg-[#0B0B0B] py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#2B1F14] disabled:opacity-50"
+                                >
+                                    {managingSpecial.isSubmitting ? "Saving..." : "Save Special"}
+                                </button>
+
+                                {managingSpecial.menu.isSeasonalSpecial && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveSeasonalSpecial(managingSpecial.menu._id)}
+                                        disabled={managingSpecial.isSubmitting}
+                                        className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600 transition hover:bg-red-100 disabled:opacity-50"
+                                    >
+                                        Remove Special
+                                    </button>
+                                )}
+
+                                <button
+                                    type="button"
+                                    onClick={() => setManagingSpecial(null)}
+                                    className="rounded-xl border border-[#D8D0C4] bg-[#F8F5EE] px-4 py-3 text-sm font-bold text-[#5F584F] transition hover:bg-white"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             )}
 
         </div>

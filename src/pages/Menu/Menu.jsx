@@ -5,18 +5,26 @@ import {
 } from "react";
 
 import {
+    Link,
     useSearchParams
 } from "react-router-dom";
 
 import {
     FiSearch,
     FiX,
-    FiRotateCcw
+    FiRotateCcw,
+    FiTrendingUp,
+    FiAward,
+    FiBookmark
 } from "react-icons/fi";
+
+import toast from "react-hot-toast";
 
 import api from "../../services/api";
 
 import MenuCard from "../../components/MenuCard/MenuCard";
+import ReviewModal from "../../components/Reviews/ReviewModal";
+import SaveToCollectionModal from "../../components/RegularOrders/SaveToCollectionModal";
 
 import {
     useCart
@@ -61,6 +69,34 @@ function Menu() {
 
 
     // =========================================
+    // Most Ordered Dishes State (Milestone 1)
+    // =========================================
+
+    const [mostOrdered, setMostOrdered] =
+        useState([]);
+
+    const [mostOrderedLoading, setMostOrderedLoading] =
+        useState(true);
+
+    const [mostOrderedError, setMostOrderedError] =
+        useState("");
+
+
+    // =========================================
+    // Seasonal Specials State (Milestone 3)
+    // =========================================
+
+    const [seasonalSpecials, setSeasonalSpecials] =
+        useState([]);
+
+    const [specialsLoading, setSpecialsLoading] =
+        useState(true);
+
+    const [specialsError, setSpecialsError] =
+        useState("");
+
+
+    // =========================================
     // QR Table State
     // =========================================
 
@@ -74,6 +110,150 @@ function Menu() {
 
     const [walkInTable, setWalkInTable] =
         useState(null);
+
+
+    // =========================================
+    // Reviews Modal State (Milestone 2)
+    // =========================================
+
+    const [selectedReviewItem, setSelectedReviewItem] =
+        useState(null);
+
+    const handleReviewSubmitted = ({ menuId, rating, numReviews }) => {
+        setMenus(prev =>
+            prev.map(m => (m._id === menuId ? { ...m, rating, numReviews } : m))
+        );
+        setMostOrdered(prev =>
+            prev.map(m => (m._id === menuId ? { ...m, rating, numReviews } : m))
+        );
+        setSeasonalSpecials(prev =>
+            prev.map(m => (m._id === menuId ? { ...m, rating, numReviews } : m))
+        );
+    };
+
+
+    // =========================================
+    // Regular Orders State (Milestone 4)
+    // =========================================
+
+    const [selectedSaveItem, setSelectedSaveItem] = useState(null);
+
+    // Collection Mode State (Milestone 4 UX Workflow)
+    const targetCollectionId = searchParams.get("collectionId");
+    const targetCollectionNameParam = searchParams.get("collectionName");
+
+    const [targetCollection, setTargetCollection] = useState(null);
+
+    useEffect(() => {
+        if (!targetCollectionId) {
+            setTargetCollection(null);
+            return;
+        }
+
+        let isMounted = true;
+        const fetchTargetCollection = async () => {
+            try {
+                const res = await api.get(`/regular-orders/${targetCollectionId}`);
+                if (isMounted && res.data?.collection) {
+                    setTargetCollection(res.data.collection);
+                }
+            } catch (err) {
+                console.error("Failed to fetch target collection:", err);
+                if (isMounted && targetCollectionNameParam) {
+                    setTargetCollection({
+                        _id: targetCollectionId,
+                        name: targetCollectionNameParam,
+                        items: []
+                    });
+                }
+            }
+        };
+
+        fetchTargetCollection();
+        return () => {
+            isMounted = false;
+        };
+    }, [targetCollectionId, targetCollectionNameParam]);
+
+    const handleAddToTargetCollection = async (item, quantity = 1) => {
+        if (!targetCollectionId) return;
+        const colName = targetCollection?.name || targetCollectionNameParam || "Collection";
+        try {
+            const res = await api.post(`/regular-orders/${targetCollectionId}/items`, {
+                menuId: item._id,
+                quantity: Math.max(1, quantity)
+            });
+
+            toast.success(`${item.name} added to ${colName}`, {
+                style: {
+                    background: "#0B0B0B",
+                    color: "#FFF6E9",
+                    border: "1px solid rgba(212, 175, 124, 0.4)",
+                    borderRadius: "14px",
+                    padding: "12px 18px",
+                    fontWeight: "600"
+                },
+                iconTheme: {
+                    primary: "#D4AF7C",
+                    secondary: "#0B0B0B"
+                }
+            });
+
+            if (res.data?.collection) {
+                setTargetCollection(res.data.collection);
+            } else {
+                setTargetCollection((prev) => ({
+                    ...prev,
+                    items: [...(prev?.items || []), { menu: item, quantity }]
+                }));
+            }
+        } catch (err) {
+            console.error("Failed to add dish to collection:", err);
+            toast.error(err.response?.data?.message || `Failed to add ${item.name} to collection`);
+        }
+    };
+
+    const handleUpdateTargetCollectionQuantity = async (item, newQty) => {
+        if (!targetCollectionId) return;
+        const colName = targetCollection?.name || targetCollectionNameParam || "Collection";
+        if (newQty < 1) {
+            try {
+                await api.delete(`/regular-orders/${targetCollectionId}/items/${item._id}`);
+                toast.success(`Removed ${item.name} from ${colName}`);
+                setTargetCollection((prev) => ({
+                    ...prev,
+                    items: (prev?.items || []).filter((it) => {
+                        const mId = it.menu?._id || it.menu;
+                        return mId !== item._id;
+                    })
+                }));
+            } catch (err) {
+                console.error("Failed to remove dish:", err);
+                toast.error(err.response?.data?.message || "Failed to remove dish");
+            }
+            return;
+        }
+
+        try {
+            const res = await api.put(`/regular-orders/${targetCollectionId}/items/${item._id}`, {
+                quantity: newQty
+            });
+            if (res.data?.collection) {
+                setTargetCollection(res.data.collection);
+            } else {
+                setTargetCollection((prev) => ({
+                    ...prev,
+                    items: (prev?.items || []).map((it) => {
+                        const mId = it.menu?._id || it.menu;
+                        return mId === item._id ? { ...it, quantity: newQty } : it;
+                    })
+                }));
+            }
+        } catch (err) {
+            console.error("Failed to update quantity:", err);
+            toast.error(err.response?.data?.message || "Failed to update quantity");
+        }
+    };
 
 
     // =========================================
@@ -129,6 +309,92 @@ function Menu() {
         } finally {
 
             setLoading(false);
+
+        }
+
+    };
+
+
+    // =========================================
+    // Fetch Most Ordered Dishes (Milestone 1)
+    // =========================================
+
+    const fetchMostOrdered = async () => {
+
+        try {
+
+            setMostOrderedLoading(true);
+
+            setMostOrderedError("");
+
+
+            const response =
+                await api.get("/menu/most-ordered");
+
+
+            setMostOrdered(
+                response.data?.dishes || []
+            );
+
+        } catch (err) {
+
+            console.error(
+                "Most Ordered Fetch Error:",
+                err
+            );
+
+
+            setMostOrderedError(
+                err.response?.data?.message ||
+                "Failed to load most ordered dishes"
+            );
+
+        } finally {
+
+            setMostOrderedLoading(false);
+
+        }
+
+    };
+
+
+    // =========================================
+    // Fetch Seasonal Specials (Milestone 3)
+    // =========================================
+
+    const fetchSeasonalSpecials = async () => {
+
+        try {
+
+            setSpecialsLoading(true);
+
+            setSpecialsError("");
+
+
+            const response =
+                await api.get("/menu/seasonal-specials");
+
+
+            setSeasonalSpecials(
+                response.data?.specials || []
+            );
+
+        } catch (err) {
+
+            console.error(
+                "Seasonal Specials Fetch Error:",
+                err
+            );
+
+
+            setSpecialsError(
+                err.response?.data?.message ||
+                "Failed to load seasonal specials"
+            );
+
+        } finally {
+
+            setSpecialsLoading(false);
 
         }
 
@@ -293,6 +559,8 @@ function Menu() {
     useEffect(() => {
 
         fetchMenus();
+        fetchMostOrdered();
+        fetchSeasonalSpecials();
 
     }, []);
 
@@ -595,6 +863,46 @@ function Menu() {
 
 
             {/* ================================= */}
+            {/* Collection Mode Banner (Milestone 4) */}
+            {/* ================================= */}
+
+            {targetCollectionId && (
+                <div className="mb-8 rounded-3xl border border-[#D4AF7C] bg-gradient-to-r from-[#0B0B0B] via-[#1F1912] to-[#0B0B0B] p-5 sm:p-6 text-white shadow-xl shadow-black/10">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex items-start sm:items-center gap-3.5">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#D4AF7C]/20 border border-[#D4AF7C]/40 text-[#D4AF7C] shadow-inner">
+                                <FiBookmark size={22} />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <span className="inline-block rounded-full bg-[#D4AF7C] px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-[#0B0B0B]">
+                                        Collection Mode
+                                    </span>
+                                    <span className="text-xs text-[#D8D0C4]">
+                                        {targetCollection?.items?.length || 0} {(targetCollection?.items?.length || 0) === 1 ? "dish" : "dishes"} saved
+                                    </span>
+                                </div>
+                                <h2 className="mt-1 text-xl sm:text-2xl font-black text-[#FFFDF9] tracking-tight">
+                                    Adding dishes to: <span className="text-[#D4AF7C]">{targetCollection?.name || targetCollectionNameParam || "Collection"}</span>
+                                </h2>
+                                <p className="mt-0.5 text-xs text-[#B8AEA2]">
+                                    Click "+ Add to {targetCollection?.name || targetCollectionNameParam || "Collection"}" on any dish below. Tap "Back to Collection" when done.
+                                </p>
+                            </div>
+                        </div>
+
+                        <Link
+                            to={`/regular-orders?collectionId=${targetCollectionId}`}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#D4AF7C] hover:bg-[#E2C296] px-5 py-3 text-xs font-black text-[#0B0B0B] uppercase tracking-wider transition shadow-md shadow-black/20 self-stretch sm:self-auto whitespace-nowrap active:scale-95"
+                        >
+                            <span>← Back to {targetCollection?.name || targetCollectionNameParam || "Collection"}</span>
+                        </Link>
+                    </div>
+                </div>
+            )}
+
+
+            {/* ================================= */}
             {/* Walk-In Table Banner */}
             {/* ================================= */}
 
@@ -694,6 +1002,159 @@ function Menu() {
                 </div>
 
             )}
+
+
+            {/* ================================= */}
+            {/* Seasonal Specials (Milestone 3)   */}
+            {/* ================================= */}
+
+            {!specialsLoading && !specialsError && seasonalSpecials.length > 0 && (
+                <section aria-labelledby="seasonal-specials-heading" className="mb-10">
+
+                    <div className="rounded-3xl border border-[#D4AF7C]/40 bg-gradient-to-b from-[#FFFDF9] via-[#FAF6ED] to-[#F5ECE0]/70 p-5 sm:p-7 shadow-sm shadow-[#2B1F14]/5">
+
+                        {/* Section Header */}
+                        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-5 border-b border-[#D4AF7C]/30 mb-6">
+                            <div>
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#0B0B0B] text-[#D4AF7C] mb-2 shadow-xs">
+                                    <span>✨</span>
+                                    Chef's Seasonal Curation
+                                </div>
+                                <h2 id="seasonal-specials-heading" className="text-2xl sm:text-3xl font-black text-[#0B0B0B] tracking-tight">
+                                    Seasonal Specials
+                                </h2>
+                                <p className="text-[#756F66] text-sm sm:text-base mt-1">
+                                    Exquisite limited-time creations crafted for the season.
+                                </p>
+                            </div>
+
+                            <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#0B0B0B] text-[#D4AF7C] border border-[#D4AF7C]/40 self-start sm:self-auto shadow-xs">
+                                {seasonalSpecials.length} Limited-Time {seasonalSpecials.length === 1 ? "Special" : "Specials"}
+                            </span>
+                        </div>
+
+                        {/* Populated Specials Grid */}
+                        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                            {seasonalSpecials.map((special) => (
+                                <MenuCard
+                                    key={`seasonal-special-${special._id}`}
+                                    item={special}
+                                    onOpenReviews={setSelectedReviewItem}
+                                    onSaveToCollection={setSelectedSaveItem}
+                                    targetCollection={targetCollection}
+                                    onAddToTargetCollection={handleAddToTargetCollection}
+                                    onUpdateTargetCollectionQuantity={handleUpdateTargetCollectionQuantity}
+                                />
+                            ))}
+                        </div>
+
+                    </div>
+
+                </section>
+            )}
+
+
+            {/* ================================= */}
+            {/* Most Ordered Dishes (Milestone 1) */}
+            {/* ================================= */}
+
+            <section aria-labelledby="most-ordered-heading" className="mb-10">
+
+                <div className="rounded-3xl border border-[#E8E0D4] bg-gradient-to-b from-[#FDFBF7] via-[#FBF7EF] to-[#F5EFE6]/60 p-5 sm:p-7 shadow-sm shadow-[#2B1F14]/5">
+
+                    {/* Section Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-5 border-b border-[#E8E0D4]/80 mb-6">
+                        <div>
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#0B0B0B] text-[#D4AF7C] mb-2">
+                                <FiTrendingUp size={13} className="text-[#D4AF7C]" />
+                                Trending Favourites
+                            </div>
+                            <h2 id="most-ordered-heading" className="text-2xl sm:text-3xl font-black text-[#0B0B0B] tracking-tight">
+                                Most Ordered This Week
+                            </h2>
+                            <p className="text-[#756F66] text-sm sm:text-base mt-1">
+                                Customer favourites from the last 7 days.
+                            </p>
+                        </div>
+
+                        {mostOrdered.length > 0 && (
+                            <span className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white border border-[#DED5C7] text-[#756F66] self-start sm:self-auto shadow-xs">
+                                Top {mostOrdered.length} Popular {mostOrdered.length === 1 ? "Dish" : "Dishes"}
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Loading State */}
+                    {mostOrderedLoading && (
+                        <div className="py-12 text-center">
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-[#D4AF7C] border-t-transparent mb-3" />
+                            <p className="text-sm font-medium text-[#756F66]">
+                                Loading this week's favourites...
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Error State */}
+                    {!mostOrderedLoading && mostOrderedError && (
+                        <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5 text-center">
+                            <p className="text-sm text-amber-800">
+                                Could not load trending dishes right now.
+                            </p>
+                            <button
+                                type="button"
+                                onClick={fetchMostOrdered}
+                                className="mt-2 text-xs font-bold text-[#B88A4A] hover:underline"
+                            >
+                                Tap to retry
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Empty State */}
+                    {!mostOrderedLoading && !mostOrderedError && mostOrdered.length === 0 && (
+                        <div className="rounded-2xl border border-dashed border-[#DED5C7] bg-white/70 p-8 sm:p-10 text-center">
+                            <div className="text-3xl sm:text-4xl mb-2">✨</div>
+                            <h3 className="text-base sm:text-lg font-bold text-[#0B0B0B]">
+                                No orders recorded in the last 7 days yet
+                            </h3>
+                            <p className="text-xs sm:text-sm text-[#756F66] mt-1 max-w-md mx-auto">
+                                The kitchen is warming up! Popular dishes will automatically appear here as qualifying orders are placed this week.
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Populated Most Ordered Grid */}
+                    {!mostOrderedLoading && !mostOrderedError && mostOrdered.length > 0 && (
+                        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                            {mostOrdered.map((dish, index) => (
+                                <div key={`most-ordered-${dish._id}`} className="flex flex-col h-full">
+                                    <div className="flex items-center justify-between mb-2.5 px-1 gap-2">
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#0B0B0B] text-[#D4AF7C] border border-[#D4AF7C]/30 shadow-xs">
+                                            <FiAward size={12} className="text-[#D4AF7C]" />
+                                            #{index + 1} Most Ordered
+                                        </span>
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-white text-[#2B1F14] border border-[#E8E0D4] shadow-xs">
+                                            🔥 {dish.totalQuantityOrdered} {dish.totalQuantityOrdered === 1 ? "portion" : "portions"} ordered
+                                        </span>
+                                    </div>
+                                    <div className="flex-1 flex flex-col">
+                                        <MenuCard
+                                            item={dish}
+                                            onOpenReviews={setSelectedReviewItem}
+                                            onSaveToCollection={setSelectedSaveItem}
+                                            targetCollection={targetCollection}
+                                            onAddToTargetCollection={handleAddToTargetCollection}
+                                            onUpdateTargetCollectionQuantity={handleUpdateTargetCollectionQuantity}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                </div>
+
+            </section>
 
 
             {/* ================================= */}
@@ -956,6 +1417,11 @@ function Menu() {
                             <MenuCard
                                 key={item._id}
                                 item={item}
+                                onOpenReviews={setSelectedReviewItem}
+                                onSaveToCollection={setSelectedSaveItem}
+                                targetCollection={targetCollection}
+                                onAddToTargetCollection={handleAddToTargetCollection}
+                                onUpdateTargetCollectionQuantity={handleUpdateTargetCollectionQuantity}
                             />
 
                         )
@@ -964,6 +1430,26 @@ function Menu() {
                 </div>
 
             )}
+
+            {/* ================================= */}
+            {/* Dish Reviews Modal (Milestone 2) */}
+            {/* ================================= */}
+
+            <ReviewModal
+                item={selectedReviewItem}
+                isOpen={!!selectedReviewItem}
+                onClose={() => setSelectedReviewItem(null)}
+                onReviewSubmitted={handleReviewSubmitted}
+            />
+
+            {/* ================================= */}
+            {/* Save to Collection Modal (Milestone 4) */}
+            {/* ================================= */}
+
+            <SaveToCollectionModal
+                dish={selectedSaveItem}
+                onClose={() => setSelectedSaveItem(null)}
+            />
 
         </div>
 
