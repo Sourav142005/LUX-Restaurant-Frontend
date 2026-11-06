@@ -1,18 +1,18 @@
-# <div align="center">🍽️ LUX RESTAURANT</div>
+ <div align="center">
 
-<div align="center">
+# 🍽️ LUX RESTAURANT
 
-**A Haute Cuisine Dining Experience & Real-Time Restaurant Management Suite**
+### A Modern Dining Experience & Restaurant Management Platform
 
-[![Live Demo](https://img.shields.io/badge/Live%20Website-luxrestaurant.vercel.app-D4AF7C?style=for-the-badge&logo=vercel&logoColor=white)](https://luxrestaurant.vercel.app/)
-[![Backend API](https://img.shields.io/badge/Backend%20API-onrender.com-0B0B0B?style=for-the-badge&logo=render&logoColor=D4AF7C)](https://lux-restaurant-backend.onrender.com)
-[![GitHub Backend](https://img.shields.io/badge/GitHub-Backend%20Repo-2B1F14?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Sourav142005/LUX-Restaurant-Backend)
+A full-stack restaurant platform combining digital ordering, reservations, payments, 3D food visualization, WebAR, and restaurant administration.
 
-<br/>
+[![Live Website](https://img.shields.io/badge/Live%20Website-luxrestaurant.vercel.app-D4AF7C?style=for-the-badge&logo=vercel&logoColor=white)](https://luxrestaurant.vercel.app/)
+[![Backend API](https://img.shields.io/badge/Backend%20API-Render-0B0B0B?style=for-the-badge&logo=render&logoColor=D4AF7C)](https://lux-restaurant-backend.onrender.com)
+[![GitHub](https://img.shields.io/badge/GitHub-Frontend%20Repository-181717?style=for-the-badge&logo=github)](https://github.com/Sourav142005/LUX-Restaurant-Frontend)
 
-[![React](https://img.shields.io/badge/React-19.2-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-8.1-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-v4.3-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vite.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Three.js](https://img.shields.io/badge/Three.js-3D%20%26%20AR-000000?style=flat-square&logo=three.js&logoColor=white)](https://threejs.org/)
 [![License](https://img.shields.io/badge/License-ISC-D4AF7C?style=flat-square)](package.json)
 
@@ -20,326 +20,360 @@
 
 ---
 
-## 📖 Executive Overview
+## Overview
 
-**LUX Restaurant** is an end-to-end luxury dining and restaurant operations platform. Engineered as a high-performance Single Page Application (SPA), it couples an immersive culinary showcase for patrons with an administrative control suite for restaurant staff.
+**LUX Restaurant** is a full-stack restaurant platform designed to improve the dining experience for customers and simplify restaurant operations for administrators.
 
-The application bridges digital ordering and floor service by delivering interactive **3D Food Exploration & WebAR**, dynamic multi-channel order orchestration (**Dine-In, Takeaway, Delivery**), flexible payment policies (**Instant Razorpay PayNow** and **In-Venue Pay-After-Dining**), automated table reservation scheduling, real-time table QR-code generation, and a context-aware voice-enabled **LUX AI Dining Concierge**.
+The customer-facing application provides a digital menu, multiple ordering modes, table reservations, order tracking, online payment, dish reviews, saved regular orders, and 3D/AR food previews. The administration interface provides tools for managing menus, orders, reservations, tables, customers, and restaurant performance.
 
----
+The platform is built with a React frontend and a Node.js/Express backend connected to MongoDB. It integrates Razorpay for online payments and provides an AI dining assistant that can use menu information to help customers explore dishes.
 
-## 📑 Table of Contents
+**Live application:** https://luxrestaurant.vercel.app/  
+**Backend API:** https://lux-restaurant-backend.onrender.com
 
-- [Executive Overview](#-executive-overview)
-- [System Architecture & Data Flow](#-system-architecture--data-flow)
-- [Verified Feature Highlights](#-verified-feature-highlights)
-  - [Customer Experience](#1-customer-experience)
-  - [3D Food Visualization & WebAR](#2-3d-food-visualization--webar)
-  - [LUX AI Dining Concierge](#3-lux-ai-dining-concierge)
-  - [Admin Operations Suite](#4-admin-operations-suite)
-- [Technology Stack](#-technology-stack)
-- [Repository Structure](#-repository-structure)
-- [Getting Started](#-getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Environment Configuration](#environment-configuration)
-  - [Available Scripts](#available-scripts)
-- [Production Deployment (Vercel)](#-production-deployment-vercel)
-- [Troubleshooting & FAQs](#-troubleshooting--faqs)
-- [Cross-Repository Ecosystem](#-cross-repository-ecosystem)
-- [Author & Acknowledgments](#-author--acknowledgments)
+## Table of Contents
 
----
+- [Features](#features)
+  - [Customer Experience](#customer-experience)
+  - [Ordering and Payments](#ordering-and-payments)
+  - [Customer Engagement](#customer-engagement)
+  - [3D Food Visualization and AR](#3d-food-visualization-and-ar)
+  - [AI Dining Assistant](#ai-dining-assistant)
+  - [Administration](#administration)
+- [System Architecture](#system-architecture)
+- [Technology Stack](#technology-stack)
+- [Repository Structure](#repository-structure)
+- [Getting Started](#getting-started)
+- [Environment Configuration](#environment-configuration)
+- [Available Scripts](#available-scripts)
+- [Deployment](#deployment)
+- [Troubleshooting](#troubleshooting)
+- [Related Repository](#related-repository)
+- [Author](#author)
 
-## 🏛️ System Architecture & Data Flow
+## Features
+
+### Customer Experience
+
+- **Digital Menu:** Browse menu items with categories, search, availability information, dietary labels, preparation details, and pricing.
+- **Dining Modes:** Supports dine-in, takeaway, and delivery ordering flows.
+- **Table Reservations:** Select a date, time, and party size; view and manage personal reservations.
+- **Order Tracking:** View order status and order history.
+- **Authentication:** Customer registration and login, phone verification, and password recovery flows.
+- **Responsive Interface:** Customer pages are designed to work across desktop and mobile screen sizes.
+
+### Ordering and Payments
+
+- **Cart Management:** Add dishes, adjust quantities, and review an order before checkout.
+- **Online Payment:** Razorpay checkout integration for supported online payment methods.
+- **Pay After Dining:** Supports the configured in-venue payment flow for eligible dine-in orders.
+- **Order Management:** Orders can be followed through their lifecycle, with cancellation and payment safeguards enforced by the backend.
+- **Table QR Ordering:** Table QR codes can open the menu with table context for on-premises ordering.
+
+### Customer Engagement
+
+- **Most Ordered Dishes:** Highlights popular dishes using recent eligible order history. Popularity is calculated using ordered quantities, not just the number of orders.
+- **Ratings and Reviews:** Eligible customers can submit a 1–5 star rating and an optional comment for dishes they have purchased. Customers can manage their own reviews.
+- **Seasonal Specials:** Displays menu items that administrators have marked as seasonal specials and that are currently within their configured availability period.
+- **My Regular Orders:** Customers can create private collections of frequently ordered dishes, organize quantities, and add available collection items to the cart for a quicker reorder. Current menu prices and availability are checked when preparing a reorder.
+
+### 3D Food Visualization and AR
+
+- **3D Dish Viewer:** View supported food models in an interactive 3D viewer.
+- **Markerless AR:** Uses `<model-viewer>` and supported device/browser AR capabilities to place compatible 3D models in the user's environment.
+- **Marker-Based AR:** Provides a separate AR.js and Three.js experience that uses a Hiro pattern marker.
+- **Model Assets:** 3D models are provided through supported GLB/GLTF or USDZ assets, depending on the viewer and device.
+
+AR availability depends on the device, browser, operating system, model format, camera permissions, and secure-context requirements. Diagnostic routes are intended for testing and should not be treated as guaranteed support on every device.
+
+### AI Dining Assistant
+
+- **Conversational Help:** Provides a voice-enabled assistant in the customer interface.
+- **Speech Input and Output:** Uses browser speech capabilities where supported.
+- **Menu-Aware Responses:** The backend can provide menu context to the AI service for dish-related questions and recommendations.
+- **Cart Actions:** Supported assistant responses can include structured dish selections for adding items to the cart.
+
+AI responses and speech features depend on the configured service credentials and browser support.
+
+### Administration
+
+- **Dashboard:** Displays operational summaries and visual reports for restaurant activity.
+- **Menu Management:** Create and update menu items, categories, pricing, availability, and supported media/model references.
+- **Order Management:** Review incoming orders and update their operational status.
+- **Reservations:** View and manage customer table reservations.
+- **Table Management:** Maintain table information and generate QR codes for table-based ordering.
+- **Customer Management:** View customer accounts and relevant account information.
+- **Seasonal Specials Management:** Mark menu items as seasonal specials and configure their start and end dates.
+
+Administrative actions are protected by backend authentication and role-based authorization.
+
+## System Architecture
+
+LUX uses a client-server architecture. The frontend communicates with the backend through REST API requests. The backend handles authentication, business rules, database operations, payment-related workflows, and integrations with external services.
 
 ```mermaid
 flowchart TD
-    subgraph Client["LUX Frontend (React 19 + Vite)"]
-        UI["Tailwind CSS v4 & Lucide Icons"]
-        Router["React Router v7"]
-        Context["AuthContext & CartContext"]
-        AxiosClient["Axios HTTP Client (JWT Interceptor)"]
-        ThreeCanvas["Three.js / @google/model-viewer"]
-        RazorpayModal["Razorpay Checkout Modal"]
+    Customer["Customer / Administrator"]
+    subgraph Frontend["Frontend — React + Vite"]
+        UI["React UI"]
+        Router["React Router"]
+        State["Auth and Cart Context"]
+        APIClient["Axios API Client"]
+        Viewer["3D Viewer / WebAR"]
+        Checkout["Razorpay Checkout"]
     end
 
-    subgraph Backend["LUX Backend (Express 5 on Render)"]
-        API["REST Endpoints (/api/*)"]
-        Scheduler["Background Scheduler (60s loop)"]
-        Mongo[("MongoDB Atlas Database")]
+    subgraph Backend["Backend — Node.js + Express"]
+        API["REST API"]
+        Auth["Authentication and Authorization"]
+        Controllers["Application Controllers"]
+        Database[("MongoDB")]
     end
 
-    subgraph External["Third-Party Services"]
-        RazorpayGateway["Razorpay Payment Gateway"]
-        GeminiAPI["Google Gemini GenAI"]
+    subgraph Services["External Services"]
+        Razorpay["Razorpay"]
+        AI["Configured AI Service"]
     end
 
+    Customer --> UI
     UI --> Router
-    Router --> Context
-    Context --> AxiosClient
-    AxiosClient -->|"Bearer JWT /api/*"| API
-    API --> Mongo
-    AxiosClient -->|"POST /order/:id/payment"| API
-    API -->|"Order Paise & Key"| AxiosClient
-    AxiosClient -->|"Open Checkout"| RazorpayModal
-    RazorpayModal -->|"Process Card / UPI"| RazorpayGateway
-    RazorpayGateway -->|"Webhook Signature"| API
-    ThreeCanvas -.->|"GLB / USDZ Assets"| UI
-    AxiosClient -->|"POST /api/ai/chat"| API
-    API -->|"Live Menu Context"| GeminiAPI
+    Router --> State
+    State --> APIClient
+    APIClient --> API
+    API --> Auth
+    Auth --> Controllers
+    Controllers --> Database
+    APIClient --> Checkout
+    Checkout --> Razorpay
+    API --> AI
+    UI --> Viewer
 ```
 
----
+## Technology Stack
 
-## ✨ Verified Feature Highlights
+| Area | Technology | Purpose |
+|---|---|---|
+| Frontend framework | React 19 | Component-based user interface |
+| Build tool | Vite | Development server and production build |
+| Routing | React Router | Client-side navigation and route protection |
+| Styling | Tailwind CSS 4 | Utility-first styling |
+| HTTP client | Axios | Frontend-to-backend API communication |
+| Backend | Node.js and Express | REST API and application logic |
+| Database | MongoDB with Mongoose | Persistent application data |
+| Authentication | JWT and role-based middleware | Authenticated and authorized access |
+| Payments | Razorpay | Online payment checkout |
+| 3D rendering | Three.js and model-viewer | Interactive 3D food models |
+| Marker-based AR | AR.js | Pattern-marker tracking |
+| Charts | Recharts | Dashboard data visualization |
+| QR codes | qrcode.react | Table QR code generation |
+| Icons | Lucide React and React Icons | Interface iconography |
+| Notifications | React Hot Toast | User feedback and notifications |
+| Linting | Oxlint | JavaScript and JSX linting |
 
-### 1. Customer Experience
+## Repository Structure
 
-- **Gourmet Digital Menu:** Real-time catalog with dynamic category filters, search, dietary indicators (Vegetarian / Non-Vegetarian tags), spice levels, prep times, and live item availability.
-- **Adaptive Dining Modes:**
-  - **Dine-In:** Pre-order meals tied to future reservations, or link directly to a physical table on-site via walk-in QR codes (`?tableId=...`).
-  - **Takeaway:** Pick-up scheduling without table constraints.
-  - **Delivery:** Direct-to-door fulfillment with address capture.
-- **Flexible Payment Policies:**
-  - **PayNow:** Online transactions processed via the integrated Razorpay modal (Cards, UPI, Netbanking).
-  - **PayAfterDining:** In-venue settlement for verified dine-in and table-seated guests.
-- **Table Reservation Hub:** Interactive date, time, and party-size booking with instant conflict checks, personal reservation histories, and self-service cancellation.
-- **Order Tracking & Safety:** Real-time order progress timeline (`Scheduled` ➔ `Pending` ➔ `Preparing` ➔ `Ready` ➔ `Delivered` / `Cancelled`) with safe order cancellation.
-- **Resilient Authentication:** Email/password and phone-based OTP verification, forgot-password recovery via signed reset tokens, and automatic 401 session expiry recovery (`lux:auth-expired`).
-
-### 2. 3D Food Visualization & WebAR
-
-- **Interactive 3D Dish Viewers:** Embedded Model Viewer (`@google/model-viewer`) and Three.js canvas (`@react-three/fiber`, `@react-three/drei`) allowing 360-degree rotation, zoom, and inspection of signature menu items.
-- **Augmented Reality Previews:** Augmented reality rendering using standard AR markers (`@ar-js-org/ar.js`) and direct USDZ/GLB placement on compatible iOS QuickLook and Android SceneViewer devices.
-- **Dedicated Diagnostic Sandboxes:** Built-in route sandboxes (`/food-3d-test`, `/ar-test`, `/marker-ar-test`) for 3D model testing and rendering validation.
-
-### 3. LUX AI Dining Concierge
-
-- **Astra / Luci AI Assistant:** Floating, voice-enabled assistant available across all customer routes.
-- **Speech Recognition & Synthesis:** Web Speech API integration for hands-free voice input and verbal feedback.
-- **Live Menu Intelligence:** Grounded directly in live menu database records to provide accurate recommendations, dietary answers, and price quotes.
-- **Actionable Responses:** Capable of directly dispatching items to the customer's cart through structured conversational payloads (`itemsToCart`).
-
-### 4. Admin Operations Suite
-
-- **Executive Analytics Dashboard:**
-  - Real-time KPI summaries: Gross Revenue, Total Orders, Active Customers, and Pending Kitchen Tickets.
-  - Interactive financial trends powered by **Recharts**.
-  - Dynamic table availability gauges and today's reservation tracker.
-  - Configurable auto-polling (30s) and manual sync controls with smooth background refresh.
-- **Kitchen & Order Management (`/admin/orders`):**
-  - Segmented order boards: Scheduled, Pending, Preparing, Ready, Delivered, and Cancelled.
-  - **Dedicated Cancellation Modal:** Reason-validated cancellations routing directly to the backend's Phase 2A safe refund pipeline.
-  - **Reconciliation Audit Center:** Filter orders requiring manual review (`reconciliationRequired`) with dedicated liability badges.
-- **Floor & Table Management (`/admin/tables`):**
-  - Table registry (capacity, location type, status).
-  - Dynamic **QR Code Generation** (`qrcode.react`) for physical table placement to drive walk-in self-ordering.
-  - Safe **Close Table** release controls with payment completion safeguards.
-- **Menu & Category Control:** Full CRUD interface for menu items, pricing, preparation intervals, 3D model links, image paths, and category organization.
-- **Reservation Oversight:** Administrative confirmation, rescheduling, and cancellation of table bookings.
-- **User Oversight:** Customer account directory and permission audits.
-
----
-
-## 🛠️ Technology Stack
-
-| Domain | Technology | Purpose |
-| :--- | :--- | :--- |
-| **Framework** | [React 19](https://react.dev/) | Declarative component UI architecture |
-| **Build Tool** | [Vite 8](https://vitejs.dev/) | Instant HMR development server and optimized Rollup bundler |
-| **Routing** | [React Router v7](https://reactrouter.com/) | Client-side routing, protected customer & admin route guards |
-| **Styling** | [Tailwind CSS v4](https://tailwindcss.com/) | High-performance utility-first styling with native CSS nesting |
-| **3D & WebAR** | [Three.js](https://threejs.org/) & [@google/model-viewer](https://modelviewer.dev/) | 3D food model rendering, camera controls, and mobile AR |
-| **3D React Fiber** | [@react-three/fiber](https://r3f.docs.pmnd.rs/) & [drei](https://github.com/pmndrs/drei) | Declarative Three.js scene graph in React |
-| **WebAR Engine** | [@ar-js-org/ar.js](https://ar-js-org.github.io/AR.js-Docs/) | Pattern-marker AR camera view for table-top visualization |
-| **HTTP Client** | [Axios](https://axios-http.com/) | Promise-based API requests with automatic JWT injection |
-| **Data Viz** | [Recharts](https://recharts.org/) | Responsive SVG charts for revenue and order analytics |
-| **QR Generation** | [qrcode.react](https://github.com/zpao/qrcode.react) | SVG and canvas QR code rendering for walk-in table ordering |
-| **Icons & UI** | [Lucide React](https://lucide.dev/) & [React Icons](https://react-icons.github.io/react-icons/) | Feather & luxury icon sets |
-| **Notifications** | [React Hot Toast](https://react-hot-toast.com/) | Lightweight toast notifications with branded styling |
-| **Linter** | [Oxlint](https://oxc.rs/) | High-speed Rust-based JavaScript/React linter |
-
----
-
-## 📂 Repository Structure
+The following is a high-level overview of the frontend repository. Some implementation details may evolve as the project changes.
 
 ```text
-frontend/
-├── public/                     # Static assets served at root
-│   ├── ar-data/                # Augmented reality descriptors & patterns
-│   ├── images/                 # Dish photography & culinary assets
-│   ├── markers/                # Hi-contrast camera tracking markers
-│   ├── models/                 # GLB & USDZ 3D food models
-│   ├── favicon.svg             # LUX brand favicon
-│   └── icons.svg               # SVG sprite sheet
+LUX-Restaurant-Frontend/
+├── public/
+│   ├── ar-data/
+│   ├── images/
+│   ├── markers/
+│   └── models/
 ├── src/
-│   ├── components/             # Reusable modular UI components
-│   │   ├── AdminRoute/         # Role-based route guard for administrators
-│   │   ├── AdminSidebar/       # Collapsible navigation drawer for admin pages
-│   │   ├── FoodModelViewer/    # Three.js / @google/model-viewer canvas wrapper
-│   │   ├── Footer/             # Brand footer with operating hours & contact
-│   │   ├── LuxAi/              # Voice assistant, message formatter, Luci avatar
-│   │   ├── MenuCard/           # Menu item card with pricing & 3D triggers
-│   │   ├── Navbar/             # Customer navigation, cart counter, auth status
-│   │   ├── OrderCard/          # Order summary card with tracking timeline
-│   │   └── ProtectedRoute/     # Authentication guard for customer accounts
-│   ├── context/                # Global state management
-│   │   ├── AuthContext.jsx     # User authentication, token lifecycle, profile state
-│   │   └── CartContext.jsx     # Cart items, quantities, totals, table sync
-│   ├── Layouts/                # Page shell layouts
-│   │   ├── AdminLayout.jsx     # Admin wrapper with responsive sidebar
-│   │   └── CustomerLayout.jsx  # Customer wrapper with Navbar, Footer & LUX AI
-│   ├── pages/                  # Routed application views
-│   │   ├── Admin/              # Admin control suite
-│   │   │   ├── Categories/     # Category CRUD & dish association
-│   │   │   ├── Dashboard/      # Operations overview, Recharts analytics, KPI cards
-│   │   │   ├── Menu/           # Food catalog management & 3D asset linking
-│   │   │   ├── Orders/         # Order dispatching, cancellations, reconciliation
-│   │   │   ├── Reservations/   # Table booking approvals & schedules
-│   │   │   ├── Tables/         # Floor plan status & table QR generator
-│   │   │   └── Users/          # User management directory
-│   │   ├── AR/                 # Augmented reality viewports (MarkerAR.jsx)
-│   │   ├── Auth/               # ForgotPassword, ResetPassword, VerifyPhone
-│   │   ├── Cart/               # Order review, dining mode selector, pricing
-│   │   ├── Checkout/           # Razorpay integration, table selection, PayAfterDining
-│   │   ├── Home/               # Hero showcase, signature carousel, reservation CTA
-│   │   ├── Login/              # Multi-identifier sign-in
-│   │   ├── Menu/               # Full digital culinary catalog with filters
-│   │   ├── Orders/             # Customer personal order tracker
-│   │   ├── Register/           # New account registration & phone verification
-│   │   ├── Reservations/       # Booking scheduler & MyReservations overview
-│   │   ├── ARTest.jsx          # AR diagnostic sandbox
-│   │   └── Food3DTest.jsx      # 3D diagnostic sandbox
+│   ├── components/
+│   │   ├── AdminRoute/
+│   │   ├── FoodModelViewer/
+│   │   ├── LuxAi/
+│   │   ├── MenuCard/
+│   │   ├── Navbar/
+│   │   ├── OrderCard/
+│   │   ├── RegularOrders/
+│   │   ├── Reviews/
+│   │   └── ProtectedRoute/
+│   ├── context/
+│   │   ├── AuthContext.jsx
+│   │   └── CartContext.jsx
+│   ├── Layouts/
+│   ├── pages/
+│   │   ├── Admin/
+│   │   ├── AR/
+│   │   ├── Auth/
+│   │   ├── Cart/
+│   │   ├── Checkout/
+│   │   ├── Home/
+│   │   ├── Menu/
+│   │   ├── Orders/
+│   │   ├── RegularOrders/
+│   │   └── Reservations/
 │   ├── services/
-│   │   └── api.js              # Centralized Axios instance with auth interceptors
-│   ├── App.jsx                 # Client-side router declarations
-│   ├── index.css               # Global styling & Tailwind CSS v4 directives
-│   └── main.jsx                # Application root mount
-├── .env.local                  # Local environment overrides (ignored by git)
-├── index.html                  # HTML5 document template
-├── package.json                # Project dependencies and script declarations
-├── vite.config.js              # Vite compiler configuration
-└── README.md                   # Repository documentation
+│   │   └── api.js
+│   ├── App.jsx
+│   ├── index.css
+│   └── main.jsx
+├── .env.example
+├── index.html
+├── package.json
+├── vite.config.js
+└── README.md
 ```
 
----
-
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- **Node.js:** `v18.0.0` or higher (`v20.x` or `v22.x` recommended)
-- **Package Manager:** `npm` (`v9.x` or higher)
-- **Backend API:** A running instance of the [LUX Backend](https://github.com/Sourav142005/LUX-Restaurant-Backend) (either local or deployed on Render)
+- Node.js version supported by the installed Vite release (Node.js 20.19+ or 22.12+ is recommended for Vite 8).
+- npm.
+- A running LUX backend instance, either locally or deployed.
 
-### Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/Sourav142005/LUX-Restaurant-Frontend.git
-   cd LUX-Restaurant-Frontend
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-### Environment Configuration
-
-The application consumes `VITE_API_URL` to route requests through Axios. Create a local environment file in the `frontend` root:
+### 1. Clone the repository
 
 ```bash
-# Windows PowerShell
-New-Item -ItemType File -Name .env.local -Force
+git clone https://github.com/Sourav142005/LUX-Restaurant-Frontend.git
+cd LUX-Restaurant-Frontend
 ```
 
-Add your backend API target (ensure no trailing slash):
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure the frontend environment
+
+Create a `.env.local` file in the frontend project root. See [Environment Configuration](#environment-configuration) below.
+
+### 4. Start the development server
+
+```bash
+npm run dev
+```
+
+Vite normally serves the application at:
+
+```text
+http://localhost:5173
+```
+
+Make sure the backend is running and that its CORS configuration permits the frontend origin.
+
+## Environment Configuration
+
+The frontend uses the `VITE_API_URL` variable to determine the backend API base URL.
+
+Create `.env.local` in the frontend root:
 
 ```dotenv
-# .env.local - Local Development Configuration
+# Local backend
 VITE_API_URL=http://localhost:5000/api
-
-# For testing directly against the deployed Render backend:
-# VITE_API_URL=https://lux-restaurant-backend.onrender.com/api
 ```
 
-> [!IMPORTANT]
-> Variables prefixed with `VITE_` are bundled directly into client JavaScript. Never place private keys, database passwords, or server-side payment secrets in frontend environment files.
+To use the deployed backend instead:
 
-### Available Scripts
+```dotenv
+VITE_API_URL=https://lux-restaurant-backend.onrender.com/api
+```
 
-| Command | Action |
-| :--- | :--- |
-| `npm run dev` | Boots the Vite development server with Hot Module Replacement (HMR) at `http://localhost:5173` |
-| `npm run build` | Compiles an optimized, minified production distribution to `dist/` |
-| `npm run preview` | Runs a local static web server to preview the built `dist/` bundle |
-| `npm run lint` | Executes [Oxlint](https://oxc.rs/) across all JavaScript/JSX source files |
+Use the value appropriate to your environment. Do not add both active definitions to the same file.
 
----
+> **Security:** Vite exposes variables prefixed with `VITE_` to browser-side code. Never put database credentials, JWT secrets, Razorpay secret keys, private API keys, or other server-side secrets in frontend environment files.
 
-## ☁️ Production Deployment (Vercel)
+The `.env.local` file is intended for local configuration and should not be committed. Use `.env.example` as the safe configuration template where available.
 
-The LUX Frontend is configured for zero-configuration continuous deployment on [Vercel](https://vercel.app).
+## Available Scripts
 
-1. **Import Project:** Connect your GitHub account and import `Sourav142005/LUX-Restaurant-Frontend`.
-2. **Framework Preset:** Select **Vite**.
-3. **Build Settings:**
-   - **Build Command:** `npm run build` (or `vite build`)
-   - **Output Directory:** `dist`
-   - **Install Command:** `npm install`
-4. **Environment Variables:**
-   - Add `VITE_API_URL` with value: `https://lux-restaurant-backend.onrender.com/api`
-5. **SPA Routing:** Ensure single-page routing rewrites are configured so all sub-routes resolve to `index.html`.
+| Command | Description |
+|---|---|
+| `npm run dev` | Starts the Vite development server. |
+| `npm run build` | Creates the optimized production build in `dist/`. |
+| `npm run preview` | Serves the production build locally for preview. |
+| `npm run lint` | Runs the configured Oxlint checks. |
 
-Live Production URL: **[https://luxrestaurant.vercel.app/](https://luxrestaurant.vercel.app/)**
+Run scripts from the frontend repository root.
 
----
+## Deployment
 
-## 🔧 Troubleshooting & FAQs
+The frontend is deployed on **Vercel**.
 
-<details>
-<summary><b>1. Network Error or CORS Blocked when communicating with Backend</b></summary>
+- **Repository:** [LUX-Restaurant-Frontend](https://github.com/Sourav142005/LUX-Restaurant-Frontend)
+- **Production URL:** https://luxrestaurant.vercel.app/
 
-- **Symptom:** Browser console logs `Access to XMLHttpRequest at '...' from origin 'http://localhost:5173' has been blocked by CORS policy`.
-- **Solution:** Verify that your backend `CLIENT_URL` environment variable includes your local frontend origin (e.g. `http://localhost:5173`). In production, the backend allows any `*.vercel.app` domain automatically.
-</details>
+Typical Vercel configuration:
 
-<details>
-<summary><b>2. Razorpay Modal Does Not Open on Checkout</b></summary>
+| Setting | Value |
+|---|---|
+| Framework preset | Vite |
+| Install command | `npm install` |
+| Build command | `npm run build` |
+| Output directory | `dist` |
+| Environment variable | `VITE_API_URL` |
 
-- **Symptom:** Clicking "Proceed to Payment" displays a loading state or logs `Razorpay SDK failed to load`.
-- **Solution:** Verify your internet connection allows loading scripts from `https://checkout.razorpay.com/v1/checkout.js`. Ensure your browser ad-blocker or brave shields are not blocking payment iframes. Check that the backend returned a valid `key` in the `POST /order/:id/payment` response.
-</details>
+Set `VITE_API_URL` in the Vercel project environment to:
 
-<details>
-<summary><b>3. Session Expiration / Immediate 401 Redirects</b></summary>
+```text
+https://lux-restaurant-backend.onrender.com/api
+```
 
-- **Symptom:** User is abruptly logged out with a toast notification: *"Your session has expired. Please sign in again."*
-- **Solution:** The frontend features an automatic 401 interceptor in [`src/services/api.js`](src/services/api.js). When a JWT expires, the app clears stale localStorage tokens and dispatches `lux:auth-expired`. Simply log in again to acquire a fresh 24-hour token.
-</details>
+If client-side routes are refreshed directly in production, configure the appropriate Vercel SPA rewrite so application routes are served through `index.html`.
 
----
+The backend is deployed separately:
 
-## 🌐 Cross-Repository Ecosystem
+- **Backend repository:** [LUX-Restaurant-Backend](https://github.com/Sourav142005/LUX-Restaurant-Backend)
+- **Backend URL:** https://lux-restaurant-backend.onrender.com
 
-| Component | Repository Link | Deployed URL |
-| :--- | :--- | :--- |
-| **Frontend Web App** | [Sourav142005/LUX-Restaurant-Frontend](https://github.com/Sourav142005/LUX-Restaurant-Frontend) | [luxrestaurant.vercel.app](https://luxrestaurant.vercel.app/) |
-| **Backend REST API** | [Sourav142005/LUX-Restaurant-Backend](https://github.com/Sourav142005/LUX-Restaurant-Backend) | [lux-restaurant-backend.onrender.com](https://lux-restaurant-backend.onrender.com) |
+## Troubleshooting
 
----
+### API requests fail or show a CORS error
 
-## 👨‍💻 Author & Acknowledgments
+- Confirm that the backend is running and reachable.
+- Check that `VITE_API_URL` points to the correct API base URL.
+- Confirm that the backend CORS allowlist includes the frontend origin, such as `http://localhost:5173`.
+- Restart the Vite server after changing environment variables.
 
-**Sourav Shridhar Kamble**<br/>
-- **GitHub:** [@Sourav142005](https://github.com/Sourav142005)
-- **LinkedIn:** [Sourav Kamble](https://www.linkedin.com/in/sourav-kamble)
-- **Email:** [sourav142005@gmail.com](mailto:sourav142005@gmail.com)
+### Razorpay checkout does not open
+
+- Confirm that the browser can load the Razorpay checkout script.
+- Check the browser console and backend logs for the actual failure.
+- Verify that the backend payment configuration is present and valid.
+- Do not expose the Razorpay secret key in frontend configuration.
+
+### Authentication stops working
+
+- Check whether the session token has expired.
+- Sign in again to obtain a valid session.
+- Confirm that the frontend and backend are using compatible authentication configuration.
+- Inspect the browser console and API response for the specific error.
+
+### 3D model or AR preview does not work
+
+- Confirm that the model URL is reachable and the model file is valid.
+- Allow camera access when the selected AR mode requires it.
+- Test on a supported mobile device and browser.
+- For browser-based AR, use HTTPS or an eligible local development origin.
+- Remember that marker-based AR requires the correct printed/displayed marker and camera visibility.
+
+## Related Repository
+
+| Component | Repository | Deployment |
+|---|---|---|
+| LUX Frontend | [LUX-Restaurant-Frontend](https://github.com/Sourav142005/LUX-Restaurant-Frontend) | [Live Website](https://luxrestaurant.vercel.app/) |
+| LUX Backend | [LUX-Restaurant-Backend](https://github.com/Sourav142005/LUX-Restaurant-Backend) | [Backend API](https://lux-restaurant-backend.onrender.com) |
+
+## Author
+
+**Sourav Shridhar Kamble**
+
+- GitHub: [@Sourav142005](https://github.com/Sourav142005)
+- LinkedIn: [Sourav Kamble](https://www.linkedin.com/in/sourav-kamble)
+- Email: [sourav142005@gmail.com](mailto:sourav142005@gmail.com)
 
 ---
 
 <div align="center">
-<sub>Crafted with passion for haute cuisine and modern web engineering. &copy; 2026 LUX Restaurant Platform.</sub>
+
+*Built with care at the intersection of hospitality and modern web engineering.*
+
+© 2026 LUX Restaurant Platform
+
 </div>
